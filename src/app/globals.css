@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Body, prevent scrolling */
+body {
+  height: 100%;
+  overflow-y: hidden;
+}
+
+/* Slides Nav */
+.slides-nav {
+  z-index: 99;
+  position: fixed;
+  right: 2%;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  color: #111;
+}
+
+.slides-nav__nav {
+  position: relative;
+  display: block;
+  font-size: 1em;
+  transform: rotate(90deg);
+}
+
+button {
+  display: inline-block;
+  padding: 0.35em;
+  margin: 0;
+  font-family: "Space Mono", monospace;
+  background: transparent;
+  border: 0;
+  transition: color 0.5s ease;
+  cursor: pointer;
+}
+
+button:after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 1px;
+  width: 0;
+  background: #111;
+  transition: width 0.4s ease;
+}
+
+button:hover {
+  color: rgba(17, 17, 17, 0.75);
+}
+
+button:hover:after {
+  width: 100%;
+}
+
+button:focus {
+  outline: 0;
+}
+
+/* Slides */
+.slides {
+  position: relative;
+  display: block;
+  height: 100vh;
+  width: 100%;
+  background: #fff;
+  transition: background 1s cubic-bezier(.99, 1, .92, 1);
+}
+
+/* Single Slide */
+.slide {
+  z-index: -1;
+  padding: 0;
+  position: absolute;
+  width: 100%;
+  height: 100vh;
+  transition: z-index 1s ease;
+}
+
+.slide.is-active {
+  z-index: 19;
+}
+
+.slide__content {
+  position: relative;
+  margin: 0 auto;
+  height: 95%;
+  width: 95%;
+  top: 2.5%;
+}
+
+.slide__header {
+  z-index: 9;
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  transform: translateX(5%);
+}
+
+.slide__title {
+  font-family: Montserrat, helvetica;
+  font-size: 2.5em;
+  font-weight: 700;
+  color: #111;
+}
+
+.title-line span {
+  display: inline-block;
+  transform: translate3d(0, 140%, 0);
+  opacity: 0;
+  transition: transform 0.4s ease, opacity 0.8s ease;
+}
+
+.is-active .title-line span {
+  transform: translate3d(0, 0%, 0);
+  opacity: 1;
+  transition: transform 0.6s cubic-bezier(.77, 0, .175, 1), opacity 0.1s ease;
+}
+
+.slide__figure {
+  z-index: 7;
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  height: 100%;
+  width: 100%;
+  transition: transform 0.5s cubic-bezier(.19, 1, .22, 1);
+}
+
+.is-sliding .slide__figure {
+  transform: scale(0.8);
+}
+
+.slide__img {
+  background-size: cover;
+  background-position: 50%;
+  height: 0;
+  width: 100%;
+  transition: height 1s 1.4s cubic-bezier(.19, 1, .22, 1), filter 0.4s 0.1s ease;
+}
+
+.is-active .slide__img {
+  height: 100%;
+  opacity: 1;
+}
+
+.is-sliding .slide__img {
+  filter: grayscale(100%);
+}
+
+.slides-nav__nav {
+  @apply rotate-90 origin-center text-dark;
+  font-family: var(--font-nav); /* Using the font from the config */
+}
+
+button {
+  @apply px-2 py-1 font-mono bg-transparent border-0 hover:text-opacity-75;
+  font-family: var(--font-nav);
+  transition: color 0.5s ease;
+}
