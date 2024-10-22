@@ -1,3 +1,6 @@
+## Definicion del proyecto 
+https://docs.google.com/document/d/12H-8ZWMMZJGwY_Au9-M_V7rOe9Ud7HGca6-igmBImv4/edit?usp=sharing
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
