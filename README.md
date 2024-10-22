@@ -1,6 +1,10 @@
 ## Definicion del proyecto 
 https://docs.google.com/document/d/12H-8ZWMMZJGwY_Au9-M_V7rOe9Ud7HGca6-igmBImv4/edit?usp=sharing
 
+## DB
+https://lucid.app/lucidchart/9458501d-1211-47f4-9fec-d414eafa17ee/edit?viewport_loc=42%2C-43%2C907%2C752%2C0_0&invitationId=inv_38ae5084-d897-41cc-82ba-bd11cada5a3e
+
+-----
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
