@@ -6,6 +6,11 @@ import styles from '../modules/BirthdayCard.module.css';
 const BirthdayCard: React.FC = () => {
   return (
     <div className='fixed top-0 left-0 w-full h-full bg-yellow-400 flex items-center justify-center'>
+              <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
+        <nav className="slides-nav__nav rotate-90 transform origin-center">
+          <button className="slides-nav__prev px-2 py-1 font-mono">Next</button>
+        </nav>
+      </section>
         <div className={styles.containerBg} >
             <div className={styles.card}>
               <div className={styles.outside}>
