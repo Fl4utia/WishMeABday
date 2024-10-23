@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 
 const slides = [
-  { url: "https://source.unsplash.com/nfTA8pdaq9A/2000x1100", title1: "Wish Happy Birthday", title2: "to your friends" },
+  { url: "https://source.unsplash.com/nfTA8pdaq9A/2000x1100.png", title1: "Wish Happy Birthday", title2: "to your friends" },
   { url: "https://source.unsplash.com/okmtVMuBzkQ/2000x1100", title1: "Get started", title2: "today" },
 ];
 
