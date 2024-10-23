@@ -22,7 +22,8 @@ const BirthdayCard: React.FC = () => {
               </div>
               <div className={styles.inside}>
                 <p className='text-black '>
-                  Write a short message to get started
+                  This is a preview of the card. You can latter write a short message to get started...
+                  Lorem ipsum dolor sit amet consectetur adipisicing elit. 
                 </p>
                 <h1 style={{ fontSize: '2rem' }}>&#127873;</h1>
               </div>
