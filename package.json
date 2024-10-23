@@ -9,12 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "canvas-confetti": "^1.9.3",
     "jquery": "^3.7.1",
     "next": "15.0.0",
     "react": "19.0.0-rc-65a56d0e-20241020",
     "react-dom": "19.0.0-rc-65a56d0e-20241020"
   },
   "devDependencies": {
+    "@types/canvas-confetti": "^1.6.4",
     "@types/jquery": "^3.5.31",
     "@types/node": "^20",
     "@types/react": "^18",

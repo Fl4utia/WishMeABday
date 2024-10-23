@@ -181,3 +181,7 @@ button {
   font-family: var(--font-nav);
   transition: color 0.5s ease;
 }
+
+.text-content{
+  font-family: "Space Mono", monospace;
+}
