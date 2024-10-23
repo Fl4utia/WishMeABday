@@ -65,7 +65,7 @@ export default function Home({ name }: HomeProps) {
       {/* Navigation */}
       <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
         <nav className="slides-nav__nav rotate-90 transform origin-center">
-          <button className="slides-nav__prev px-2 py-1 font-mono">Card</button>
+          <button className="slides-nav__prev px-2 py-1 font-mono">Create</button>
           <button className="slides-nav__next px-2 py-1 font-mono">Dashboard</button>
         </nav>
       </section>
@@ -73,15 +73,15 @@ export default function Home({ name }: HomeProps) {
       <section className="slides relative w-full h-full overflow-hidden flex flex-col items-center justify-center flex-grow">
         <h1 className="text-center text-2xl font-bold mb-8 mt-12 slide__title">Welcome, {name}!!</h1>
         <div>
-        <p className="text-center   mt-2 text-content">Select a card to get started</p>
+        <p className="text-center   mt-2 text-content">Select a theme to get started</p>
 
         </div>
         <div className="flex flex-col md:flex-row justify-center items-center gap-4 p-3 pt-20">
           {/* Círculos con imágenes */}
           {[
-            { route: "/birthday1", imgSrc: "/path/to/your/image1.jpg" },
-            { route: "/birthday2", imgSrc: "/path/to/your/image2.jpg" },
-            { route: "/birthday1", imgSrc: "/path/to/your/image3.jpg" },
+            { route: "/birthday1", imgSrc: "/cards/1.png" },
+            { route: "/birthday2", imgSrc: "/cards/2.png" },
+            { route: "/birthday3", imgSrc: "/cards/3.png" },
           ].map(({ route, imgSrc }, index) => (
             <div
               key={index}

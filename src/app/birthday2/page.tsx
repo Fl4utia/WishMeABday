@@ -11,6 +11,7 @@ const BirthdayCard: React.FC = () => {
             <div className={styles.outside}>
               <div className={styles.front}>
                 <p>Happy Birthday</p>
+
                 <div className={styles.tulips}></div> {/* Tulips section */}
                 <div className={styles.teddyBear}></div> {/* Teddy Bear section */}
               </div>
@@ -18,7 +19,8 @@ const BirthdayCard: React.FC = () => {
             </div>
             <div className={styles.inside}>
               <p className='text-black'>
-                This is a test
+              This is a preview of the card. You can latter write a short message to get started...
+              Lorem ipsum dolor sit amet consectetur adipisicing elit. 
               </p>
             </div>
           </div>

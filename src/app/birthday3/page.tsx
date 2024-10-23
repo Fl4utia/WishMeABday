@@ -19,7 +19,8 @@ const BirthdayCard: React.FC = () => {
             </div>
             <div className={styles.inside}>
               <p className='text-white'>
-                This is a test
+              This is a preview of the card. You can latter write a short message to get started...
+              Lorem ipsum dolor sit amet consectetur adipisicing elit. 
               </p>
               <audio  controls >
               <source src="/audios/mañanitas.mp3" type="audio/mpeg" />
