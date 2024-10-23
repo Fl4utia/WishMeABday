@@ -51,6 +51,7 @@ button {
   font-family: "Space Mono", monospace;
   background: transparent;
   border: 0;
+  position: relative;
   transition: color 0.5s ease;
   cursor: pointer;
 }
@@ -58,12 +59,22 @@ button {
 button:after {
   content: '';
   position: absolute;
-  top: 50%;
+  top: calc(100% + 5px); /* Ajustar para que la línea quede justo debajo del botón */
   left: 0;
   height: 1px;
   width: 0;
   background: #111;
-  transition: width 0.4s ease;
+  transition: width 0.4s ease; /* Suaviza la transición del ancho */
+}
+
+
+button.hover:after {
+  width: 100%;
+}
+
+
+button.active:after {
+  width: 100%
 }
 
 button:hover {

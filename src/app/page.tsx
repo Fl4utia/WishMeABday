@@ -1,15 +1,21 @@
 "use client";
+
+import { useRouter } from 'next/router'
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 const slides = [
   { url: "https://source.unsplash.com/nfTA8pdaq9A/2000x1100", title1: "Wish Happy Birthday", title2: "to your friends" },
   { url: "https://source.unsplash.com/okmtVMuBzkQ/2000x1100", title1: "Get started", title2: "today" },
+  
 ];
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
+  const [activeButton, setActiveButton] = useState("Card");
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = (e: WheelEvent) => {
@@ -45,23 +51,44 @@ export default function Home() {
     setTimeout(() => setIsSliding(false), 700); // Shortened transition time
   };
 
+  const handleButtonClick = (button: string) => {
+    setActiveButton(button); 
+    if (button === "Card") prevSlide();
+    else nextSlide();
+
+  
+  };
+
+ 
   return (
     <main>
       <section className="slides relative w-full h-screen overflow-hidden">
         {/* Navigation */}
         <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
           <nav className="slides-nav__nav rotate-90 transform origin-center">
+            <Link href="/card">
             <button
-              className="slides-nav__prev px-2 py-1 font-mono"
-              onClick={prevSlide}
+              className={`slides-nav__prev px-2 py-1 font-mono ${activeButton === "Card" ? "active" : ""}`}
+              onClick={() => handleButtonClick("Card")}
             >
-              Prev
+              Card
             </button>
+            </Link>
+            <Link href = "/dashboard-page.tsx">
             <button
-              className="slides-nav__next px-2 py-1 font-mono"
-              onClick={nextSlide}
+              className={`slides-nav__next px-2 py-1 font-mono ${activeButton === "Dashboard" ? "active" : ""}`}
+              onClick={() => handleButtonClick("Dashboard")}
             >
-              Next
+              Dashboard
+            </button>
+            </Link>
+            <button
+              className={`slides-nav__prev px-2 py-1 font-mono ${activeButton === "Profile" ? "active" : ""}`}
+              onClick={() => handleButtonClick("Profile")}
+              
+            >
+              Profile
+
             </button>
           </nav>
         </section>
@@ -97,4 +124,6 @@ export default function Home() {
       </section>
     </main>
   );
-}
+};
+
+
