@@ -1,12 +1,27 @@
-"use client"; // Ensure this runs on the client side
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { v4 as uuidv4 } from "uuid"; 
+import { v4 as uuidv4 } from "uuid";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../db/firebase/config";
 import { doc, setDoc } from "firebase/firestore"; // Firestore functions
 
+// Import OpenAI API function
+const fetchBirthdayMessageFromAI = async (description: string) => {
+    const prompt = description
+      ? `Write a birthday message for a friend based on the following description: ${description}`
+      : "Write a generic birthday message for a friend.";
+    
+    const response = await fetch("/api/openai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, max_tokens: 300 }),
+    });
+    
+    const data = await response.json();
+    return data.message; // Assuming the API returns a message in this format
+  };
 const FriendMessage: React.FC = () => {
   const [isAiMode, setIsAiMode] = useState(false);
   const [name, setName] = useState("");
@@ -27,12 +42,11 @@ const FriendMessage: React.FC = () => {
         setUserId(user.uid);
       } else {
         setUserId(null);
-        // You can optionally redirect the user to a login page if needed
         router.push("/login");
       }
     });
 
-    return () => unsubscribe(); // Cleanup on component unmount
+    return () => unsubscribe();
   }, []);
 
   const handleToggle = () => {
@@ -42,17 +56,17 @@ const FriendMessage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+    
     if (!isAiMode && (!name || !email || !birthday || !manualMessage)) {
       setError("Please fill in all the fields.");
       return;
     }
-  
+
     setError(""); // Clear error message
-  
+
     const uuid = uuidv4();
     let generatedUrl = `http://localhost:3000`;
-  
+    
     if (cardType === "1") {
       generatedUrl = `${generatedUrl}/birthday1/${uuid}`;
     } else if (cardType === "2") {
@@ -62,34 +76,40 @@ const FriendMessage: React.FC = () => {
     } else {
       generatedUrl = `${generatedUrl}/wish?cardtype=${cardType}`;
     }
-  
+
+    let finalMessage = manualMessage;
+
+    // If AI Mode is enabled, fetch a message from ChatGPT
+    if (isAiMode) {
+      try {
+        finalMessage = await fetchBirthdayMessageFromAI(aiDescription);
+      } catch (error) {
+        setError("Error generating AI message. Please try again.");
+        return;
+      }
+    }
+
     const formData = {
       name,
       email,
       birthday,
       cardType,
-      message: isAiMode ? aiDescription : manualMessage,
+      message: finalMessage,
       mode: isAiMode ? "AI" : "MANUAL",
       link: generatedUrl,
       createdAt: new Date().toISOString(),
       id: uuid,
     };
-  
+
     try {
-        
       if (userId) {
-        // Guarda en la colección del usuario
         const friendDocRef = doc(db, `users/${userId}/friends`, uuid);
         await setDoc(friendDocRef, formData);
       }
       
-      // Guarda en la colección general de tarjetas
       const cardDocRef = doc(db, `cards`, uuid);
       await setDoc(cardDocRef, formData);
   
-      console.log("Document written successfully:", formData);
-
-      // Redirige al enlace de la tarjeta
       router.push(generatedUrl);
     } catch (error) {
       console.error("Error writing document:", error);
@@ -102,6 +122,13 @@ const FriendMessage: React.FC = () => {
     <div className="flex flex-col items-center justify-center h-screen bg-white dark:bg-white">
       <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
         <nav className="slides-nav__nav rotate-90 transform origin-center">
+        <button
+            type="button"
+            className="slides-nav__prev px-2 py-1 font-mono"
+            onClick={() => router.push("/cards")}
+          >
+            Back
+          </button>
           <button
             type="button"
             className="slides-nav__prev px-2 py-1 font-mono"
@@ -117,7 +144,7 @@ const FriendMessage: React.FC = () => {
         className="bg-white dark:bg-white p-8 rounded w-full max-w-lg"
       >
         <h2 className="text-xl font-semibold text-black dark:text-black mb-4 text-content">
-          Send a Birthday Message
+          Send a Birthday Message 
         </h2>
 
         {error && <div className="text-red-500 mb-4">{error}</div>}

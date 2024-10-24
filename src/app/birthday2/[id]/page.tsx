@@ -42,9 +42,17 @@ const BirthdayCard: React.FC = () => {
 
   // Show loading while data is being fetched
   if (!cardData) {
-    return <div>Loading...</div>;
+    return (
+      <div className="load-wrapp">
+        <div className="load-3">
+          <p className='text-black'>Loading</p>
+          <div className="line"></div>
+          <div className="line"></div>
+          <div className="line"></div>
+        </div>
+      </div>
+    );
   }
-
   // Render the birthday card when data is loaded
   return (
     <div className='fixed top-0 left-0 w-full h-full bg-blue-400 flex items-center justify-center'>
