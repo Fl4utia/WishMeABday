@@ -1,15 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation"; // Moved to the top-level scope
 
 const slides = [
   { url: "https://source.unsplash.com/nfTA8pdaq9A/2000x1100.png", title1: "Wish Happy Birthday", title2: "to your friends" },
+  { url: "https://source.unsplash.com/okmtVMuBzkQ/2000x1100", title1: "Never forget a", title2: "birthday" },
   { url: "https://source.unsplash.com/okmtVMuBzkQ/2000x1100", title1: "Get started", title2: "today" },
 ];
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
+  const router = useRouter(); // Use useRouter at the top level of the component
 
   useEffect(() => {
     const handleScroll = (e: WheelEvent) => {
@@ -45,6 +48,10 @@ export default function Home() {
     setTimeout(() => setIsSliding(false), 700); // Shortened transition time
   };
 
+  const goToLogin = () => {
+    router.push('/login'); // Using useRouter here is valid
+  };
+
   return (
     <main>
       <section className="slides relative w-full h-screen overflow-hidden">
@@ -62,6 +69,12 @@ export default function Home() {
               onClick={nextSlide}
             >
               Next
+            </button>
+            <button
+              className="slides-nav__next px-2 py-1 font-mono"
+              onClick={goToLogin}
+            >
+              Login
             </button>
           </nav>
         </section>

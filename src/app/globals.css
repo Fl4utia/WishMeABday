@@ -56,6 +56,7 @@ button {
 }
 
 button:after {
+  /*
   content: '';
   position: absolute;
   top: 50%;
@@ -64,6 +65,7 @@ button:after {
   width: 0;
   background: #111;
   transition: width 0.4s ease;
+  */
 }
 
 button:hover {
@@ -184,4 +186,12 @@ button {
 
 .text-content{
   font-family: "Space Mono", monospace;
+}
+
+.center-screen {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-right: -50%;
+  transform: translate(-50%, -50%);
 }

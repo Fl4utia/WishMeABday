@@ -1,43 +1,91 @@
 "use client";
-import React, { useState } from "react"; 
+import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { v4 as uuidv4 } from "uuid"; // You need to install uuid with `npm install uuid`
 
-const FriendMessageForm: React.FC = () => {
+const FriendMessage: React.FC = () => {
   const [isAiMode, setIsAiMode] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [birthday, setBirthday] = useState("");
   const [manualMessage, setManualMessage] = useState("");
   const [aiDescription, setAiDescription] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const cardType = searchParams.get("cardtype");
 
   const handleToggle = () => {
     setIsAiMode(!isAiMode);
+    setManualMessage(""); // Reset manual message if switching modes
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validation for required fields if not in AI mode
+    if (!isAiMode && (!name || !email || !birthday || !manualMessage)) {
+      setError("Please fill in all the fields.");
+      return;
+    }
+
+    // Clear error message
+    setError("");
+
+    // Generate unique link with card type and UUID
+    const uuid = uuidv4();
+    let generatedUrl = `http://localhost:3000`;
+
+    if (cardType === "1") {
+      generatedUrl = `${generatedUrl}/birthday1/${uuid}`;
+    } else if (cardType === "2") {
+      generatedUrl = `${generatedUrl}/birthday2/${uuid}`;
+    } else if (cardType === "3") {
+      generatedUrl = `${generatedUrl}/birthday3/${uuid}`;
+    } else {
+      generatedUrl = `${generatedUrl}/wish?cardtype=${cardType}`;
+    }
+
+    // Redirect to the generated URL with the form data
     const formData = {
       name,
       email,
       birthday,
+      cardType,
       message: isAiMode ? aiDescription : manualMessage,
     };
+
     console.log("Submitted data:", formData);
+    router.push(generatedUrl); // Navigate to the generated URL
   };
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-white dark:bg-white">
-                      <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
+      <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
         <nav className="slides-nav__nav rotate-90 transform origin-center">
-          <button className="slides-nav__prev px-2 py-1 font-mono">Next</button>
+          <button
+            type="button"
+            className="slides-nav__prev px-2 py-1 font-mono"
+            onClick={handleSubmit}
+          >
+            Next
+          </button>
         </nav>
       </section>
+
       <form
         onSubmit={handleSubmit}
-        className="bg-white dark:bg-white p-8 rounded  w-full max-w-lg"
+        className="bg-white dark:bg-white p-8 rounded w-full max-w-lg"
       >
         <h2 className="text-xl font-semibold text-black dark:text-black mb-4 text-content">
           Send a Birthday Message
         </h2>
+
+        {error && (
+          <div className="text-red-500 mb-4">
+            {error}
+          </div>
+        )}
 
         <div className="mb-4">
           <label
@@ -52,7 +100,7 @@ const FriendMessageForm: React.FC = () => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full px-3 py-2 border border-black rounded bg-white text-black focus:outline-none text-content"
-            required
+            required={!isAiMode}
           />
         </div>
 
@@ -69,7 +117,7 @@ const FriendMessageForm: React.FC = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-3 py-2 border border-black rounded bg-white text-black focus:outline-none text-content"
-            required
+            required={!isAiMode}
           />
         </div>
 
@@ -86,7 +134,7 @@ const FriendMessageForm: React.FC = () => {
             value={birthday}
             onChange={(e) => setBirthday(e.target.value)}
             className="w-full px-3 py-2 border border-black rounded bg-white text-black focus:outline-none text-content"
-            required
+            required={!isAiMode}
           />
         </div>
 
@@ -123,9 +171,13 @@ const FriendMessageForm: React.FC = () => {
               id="aiDescription"
               value={aiDescription}
               onChange={(e) => setAiDescription(e.target.value)}
+              maxLength={300}
               className="w-full px-3 py-2 border border-black rounded bg-white text-black focus:outline-none text-content"
               placeholder="My friend Diego is turning 30 and loves cats!"
             />
+            <div className="text-right text-black dark:text-black">
+              {aiDescription.length}/300
+            </div>
           </div>
         ) : (
           <div className="mb-4">
@@ -139,22 +191,19 @@ const FriendMessageForm: React.FC = () => {
               id="manualMessage"
               value={manualMessage}
               onChange={(e) => setManualMessage(e.target.value)}
-              className="w-full px-3 py-3 border border-black rounded bg-white text-black focus:outline-none text-content"
+              maxLength={300}
+              className="w-full px-3 py-2 border border-black rounded bg-white text-black focus:outline-none text-content"
               placeholder="Type your message here"
               required={!isAiMode}
             />
+            <div className="text-right text-black dark:text-black">
+              {manualMessage.length}/300
+            </div>
           </div>
         )}
-
-        <button
-          type="submit"
-          className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-content"
-        >
-          Submit
-        </button>
       </form>
     </div>
   );
 };
 
-export default FriendMessageForm;
+export default FriendMessage;
