@@ -1,14 +1,27 @@
 "use client";
 import styles from '../../modules/BirthdayCard.module.css';
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation"; // Use useParams instead of useRouter
+import { useParams, useRouter } from "next/navigation"; // Ensure useRouter is imported
 import { doc, getDoc } from "firebase/firestore"; // Firestore functions
-import { db } from "../../db/firebase/config"; // Your Firebase config
+import { db, auth } from "../../db/firebase/config"; // Your Firebase config
+import { onAuthStateChanged } from "firebase/auth"; // Import to check auth status
 
 const BirthdayCard: React.FC = () => {
   const { id } = useParams(); // Use useParams to get the id
   const [cardData, setCardData] = useState<{ message: string } | null>(null);
   const [error, setError] = useState("");
+  const [isAuth, setIsAuth] = useState(false); // Track authentication status
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check authentication state
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuth(!!user); // Set to true if user exists
+    });
+
+    // Clean up subscription
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     // Check if id is available
@@ -59,7 +72,15 @@ const BirthdayCard: React.FC = () => {
     <div className="fixed top-0 left-0 w-full h-full bg-yellow-400 flex items-center justify-center">
       <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
         <nav className="slides-nav__nav rotate-90 transform origin-center">
-          <button className="slides-nav__prev px-2 py-1 font-mono">Next</button>
+          {isAuth && (
+            <button
+              type="button"
+              className="slides-nav__prev px-2 py-1 font-mono"
+              onClick={() => router.push("/cards")}
+            >
+              Return home
+            </button>
+          )}
         </nav>
       </section>
       <div className={styles.containerBg}>
@@ -78,7 +99,6 @@ const BirthdayCard: React.FC = () => {
           </div>
           <div className={styles.inside}>
             <p className="text-black">{cardData.message}</p>
-            <h1 style={{ fontSize: "2rem" }}>&#127873;</h1>
           </div>
         </div>
       </div>

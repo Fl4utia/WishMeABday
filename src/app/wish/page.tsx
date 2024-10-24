@@ -11,12 +11,12 @@ import { doc, setDoc } from "firebase/firestore"; // Firestore functions
 const fetchBirthdayMessageFromAI = async (description: string) => {
     const prompt = description
       ? `Write a birthday message for a friend based on the following description: ${description}`
-      : "Write a generic birthday message for a friend.";
+      : "Write a generic birthday message for a friend.(don't mention names))";
     
     const response = await fetch("/api/openai", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, max_tokens: 300 }),
+      body: JSON.stringify({ prompt, max_tokens: 280 }),
     });
     
     const data = await response.json();
