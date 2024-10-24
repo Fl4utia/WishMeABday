@@ -11,7 +11,7 @@ interface HomeProps {
 export default function Home({ name }: HomeProps) {
   const router = useRouter();
 
-  const handleClick = async (event: React.MouseEvent<HTMLDivElement>, route: string) => {
+  const handleClick = async (event: React.MouseEvent<HTMLDivElement>, route: string, cardType: number) => {
     // Obtener las coordenadas del centro del círculo
     const rect = event.currentTarget.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
@@ -56,9 +56,10 @@ export default function Home({ name }: HomeProps) {
 
     // Esperar a que la animación termine antes de redirigir
     setTimeout(() => {
-      router.push(route); // Redirigir a la ruta específica
-    }, duration);
-  };
+        // Incluye el cardType como query param en la URL
+        router.push(`${route}?cardtype=${cardType}`);
+      }, duration);
+    };
 
   return (
     <main className="flex flex-col items-center justify-center h-screen text-black">
@@ -71,31 +72,30 @@ export default function Home({ name }: HomeProps) {
       </section>
 
       <section className="slides relative w-full h-full overflow-hidden flex flex-col items-center justify-center flex-grow">
-        <h1 className="text-center text-2xl font-bold mb-8 mt-12 slide__title">Welcome, {name}!!</h1>
+        <h1 className="text-center text-2xl font-bold mb-8 mt-12 slide__title">Welcome!</h1>
         <div>
-        <p className="text-center   mt-2 text-content">Select a theme to get started</p>
+        <p className="text-center mt-2 text-content">Select a theme to get started</p>
 
         </div>
         <div className="flex flex-col md:flex-row justify-center items-center gap-4 p-3 pt-20">
-          {/* Círculos con imágenes */}
-          {[
-            { route: "/birthday1", imgSrc: "/cards/1.png" },
-            { route: "/birthday2", imgSrc: "/cards/2.png" },
-            { route: "/birthday3", imgSrc: "/cards/3.png" },
-          ].map(({ route, imgSrc }, index) => (
+        {[
+            { route: "/wish", imgSrc: "/cards/1.png", cardType: 1 },
+            { route: "/wish", imgSrc: "/cards/2.png", cardType: 2 },
+            { route: "/wish", imgSrc: "/cards/3.png", cardType: 3 },
+        ].map(({ route, imgSrc, cardType }, index) => (
             <div
-              key={index}
-              onClick={(event) => handleClick(event, route)} // Acción al hacer clic
-              className="relative w-36 h-36 md:w-64 md:h-64 lg:w-80 lg:h-80 rounded-full overflow-hidden border-2 border-gray-300 flex items-center justify-center cursor-pointer transform transition-transform duration-500 hover:scale-110"
+            key={index}
+            onClick={(event) => handleClick(event, route, cardType)} // Pasa el cardType
+            className="relative w-36 h-36 md:w-64 md:h-64 lg:w-80 lg:h-80 rounded-full overflow-hidden border-2 border-gray-300 hover:border-gray-400 flex items-center justify-center cursor-pointer transform transition-transform duration-500"
             >
-              <Image
-                src={imgSrc} // Reemplaza con la ruta de tus imágenes
+            <Image
+                src={imgSrc}
                 alt={`Image ${index + 1}`}
-                layout="fill" // Esto asegura que la imagen llene el contenedor
-                objectFit="cover" // Esto recorta la imagen para que ajuste el círculo
-              />
+                layout="fill"
+                objectFit="cover"
+            />
             </div>
-          ))}
+        ))}
         </div>
       </section>
     </main>
