@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation"; // Moved to the top-level scope
+import { useRouter } from "next/navigation";
+import { db, auth } from "../app/db/firebase/config"; // Firebase config
+import { onAuthStateChanged } from "firebase/auth"; // Import onAuthStateChanged
 
 const slides = [
   { url: "https://source.unsplash.com/nfTA8pdaq9A/2000x1100.png", title1: "Wish Happy Birthday", title2: "to your friends" },
@@ -12,7 +13,21 @@ const slides = [
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
-  const router = useRouter(); // Use useRouter at the top level of the component
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Track authentication state
+  const router = useRouter();
+
+  useEffect(() => {
+    // Listen for auth changes
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);  // User is logged in
+      } else {
+        setIsAuthenticated(false); // User is logged out
+      }
+    });
+
+    return () => unsubscribe(); // Clean up listener
+  }, []);
 
   useEffect(() => {
     const handleScroll = (e: WheelEvent) => {
@@ -48,8 +63,12 @@ export default function Home() {
     setTimeout(() => setIsSliding(false), 700); // Shortened transition time
   };
 
-  const goToLogin = () => {
-    router.push('/login'); // Using useRouter here is valid
+  const handleButtonClick = () => {
+    if (isAuthenticated) {
+      router.push("/cards"); // Redirect to Cards page if logged in
+    } else {
+      router.push("/login"); // Redirect to Login page if not logged in
+    }
   };
 
   return (
@@ -72,9 +91,9 @@ export default function Home() {
             </button>
             <button
               className="slides-nav__next px-2 py-1 font-mono"
-              onClick={goToLogin}
+              onClick={handleButtonClick}
             >
-              Login
+              {isAuthenticated ? "Cards" : "Login"} {/* Conditionally render button text */}
             </button>
           </nav>
         </section>
