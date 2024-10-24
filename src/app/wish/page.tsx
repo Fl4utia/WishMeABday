@@ -1,7 +1,11 @@
-"use client";
-import React, { useState } from "react";
+"use client"; // Ensure this runs on the client side
+
+import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { v4 as uuidv4 } from "uuid"; // You need to install uuid with `npm install uuid`
+import { v4 as uuidv4 } from "uuid"; 
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "../db/firebase/config";
+import { doc, setDoc } from "firebase/firestore"; // Firestore functions
 
 const FriendMessage: React.FC = () => {
   const [isAiMode, setIsAiMode] = useState(false);
@@ -11,31 +15,44 @@ const FriendMessage: React.FC = () => {
   const [manualMessage, setManualMessage] = useState("");
   const [aiDescription, setAiDescription] = useState("");
   const [error, setError] = useState("");
+  const [userId, setUserId] = useState<string | null>(null); // Track the authenticated user
   const router = useRouter();
   const searchParams = useSearchParams();
   const cardType = searchParams.get("cardtype");
 
+  // Firebase auth check
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid);
+      } else {
+        setUserId(null);
+        // You can optionally redirect the user to a login page if needed
+        router.push("/login");
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup on component unmount
+  }, []);
+
   const handleToggle = () => {
     setIsAiMode(!isAiMode);
-    setManualMessage(""); // Reset manual message if switching modes
+    setManualMessage(""); 
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validation for required fields if not in AI mode
+  
     if (!isAiMode && (!name || !email || !birthday || !manualMessage)) {
       setError("Please fill in all the fields.");
       return;
     }
-
-    // Clear error message
-    setError("");
-
-    // Generate unique link with card type and UUID
+  
+    setError(""); // Clear error message
+  
     const uuid = uuidv4();
     let generatedUrl = `http://localhost:3000`;
-
+  
     if (cardType === "1") {
       generatedUrl = `${generatedUrl}/birthday1/${uuid}`;
     } else if (cardType === "2") {
@@ -45,19 +62,41 @@ const FriendMessage: React.FC = () => {
     } else {
       generatedUrl = `${generatedUrl}/wish?cardtype=${cardType}`;
     }
-
-    // Redirect to the generated URL with the form data
+  
     const formData = {
       name,
       email,
       birthday,
       cardType,
       message: isAiMode ? aiDescription : manualMessage,
+      mode: isAiMode ? "AI" : "MANUAL",
+      link: generatedUrl,
+      createdAt: new Date().toISOString(),
+      id: uuid,
     };
+  
+    try {
+        
+      if (userId) {
+        // Guarda en la colección del usuario
+        const friendDocRef = doc(db, `users/${userId}/friends`, uuid);
+        await setDoc(friendDocRef, formData);
+      }
+      
+      // Guarda en la colección general de tarjetas
+      const cardDocRef = doc(db, `cards`, uuid);
+      await setDoc(cardDocRef, formData);
+  
+      console.log("Document written successfully:", formData);
 
-    console.log("Submitted data:", formData);
-    router.push(generatedUrl); // Navigate to the generated URL
+      // Redirige al enlace de la tarjeta
+      router.push(generatedUrl);
+    } catch (error) {
+      console.error("Error writing document:", error);
+      setError("There was an issue saving the message. Please try again.");
+    }
   };
+  
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-white dark:bg-white">
@@ -81,17 +120,10 @@ const FriendMessage: React.FC = () => {
           Send a Birthday Message
         </h2>
 
-        {error && (
-          <div className="text-red-500 mb-4">
-            {error}
-          </div>
-        )}
+        {error && <div className="text-red-500 mb-4">{error}</div>}
 
         <div className="mb-4">
-          <label
-            htmlFor="name"
-            className="block text-black dark:text-black mb-1 text-content"
-          >
+          <label htmlFor="name" className="block text-black dark:text-black mb-1 text-content">
             Friend's Name
           </label>
           <input
@@ -105,10 +137,7 @@ const FriendMessage: React.FC = () => {
         </div>
 
         <div className="mb-4">
-          <label
-            htmlFor="email"
-            className="block text-black dark:text-black mb-1 text-content"
-          >
+          <label htmlFor="email" className="block text-black dark:text-black mb-1 text-content">
             Friend's Email
           </label>
           <input
@@ -122,10 +151,7 @@ const FriendMessage: React.FC = () => {
         </div>
 
         <div className="mb-4">
-          <label
-            htmlFor="birthday"
-            className="block text-black dark:text-black mb-1 text-content"
-          >
+          <label htmlFor="birthday" className="block text-black dark:text-black mb-1 text-content">
             Friend's Birthday
           </label>
           <input
