@@ -91,9 +91,9 @@ export default function Home({ name }: HomeProps) {
             </button>
             <button
               className="slides-nav__next px-2 py-1 font-mono"
-             
+              onClick={() => router.push("/dashboard")}
             >
-              Friends
+              Cards
             </button>
             <button
               className="slides-nav__next px-2 py-1 font-mono"

@@ -55,18 +55,7 @@ button {
   cursor: pointer;
 }
 
-button:after {
-  /*
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  height: 1px;
-  width: 0;
-  background: #111;
-  transition: width 0.4s ease;
-  */
-}
+
 
 button:hover {
   color: rgba(17, 17, 17, 0.75);
@@ -224,4 +213,13 @@ button {
   100% {
     height: 15px;
   }
+}
+
+.truncate-2-lines {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 3.5em; /* roughly 2 lines */
 }
