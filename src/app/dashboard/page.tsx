@@ -157,16 +157,7 @@ export default function Dashboard() {
                   )}
                 </td>
                 <td className="px-4 py-2 text-sm">
-                  {editFriendId === friend.id ? (
-                    <input
-                      type="date"
-                      value={formData.birthday || friend.birthday}
-                      onChange={(e) => handleChange(e, 'birthday')}
-                      className="border p-1"
-                    />
-                  ) : (
-                    friend.birthday
-                  )}
+                  {friend.birthday} 
                 </td>
                 <td className="px-4 py-2 items-center text-sm">
                   {friend.mode === "AI" ? (
