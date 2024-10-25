@@ -155,7 +155,7 @@ const FriendMessage: React.FC = () => {
   
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense>
         <div className="flex flex-col items-center justify-center h-screen bg-white dark:bg-white">
           <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
             <nav className="slides-nav__nav rotate-90 transform origin-center">
