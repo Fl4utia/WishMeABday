@@ -115,6 +115,42 @@ const FriendMessage: React.FC = () => {
       console.error("Error writing document:", error);
       setError("There was an issue saving the message. Please try again.");
     }
+
+
+    const today = new Date();
+    const todayMonth = today.getMonth() + 1; // Los meses empiezan desde 0, por eso se suma 1
+    const todayDay = today.getDate();
+    
+    // Extraer mes y día del cumpleaños
+    const birthdayDate = new Date(birthday); // Convertir el string a objeto Date
+    const birthdayMonth = birthdayDate.getUTCMonth() + 1; // Extraer el mes (se suma 1)
+    const birthdayDay = birthdayDate.getUTCDate(); // Extraer el día
+
+    // Verificar si el correo es "ximenasaibot@gmail.com" y la fecha coincide (mes y día)
+    if (email === "ximenasaibot@gmail.com" && birthdayMonth === todayMonth && birthdayDay === todayDay) {
+        const firstName = name // El nombre que quieres pasar
+        const link = generatedUrl; // El enlace que quieres pasar
+    
+        try {
+          const res = await fetch('/api/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              firstName,
+              link
+            }),
+          });
+    
+          const data = await res.json();
+          console.log(data);
+        } catch (error) {
+          console.error("Error sending email:", error);
+        }
+    } else {
+      console.log("No coincide");
+    }
   };
   
 

@@ -5,11 +5,9 @@ import Image from "next/image";
 import confetti from "canvas-confetti";
 import { auth } from "../db/firebase/config";
 
-interface HomeProps {
-  name: string; // Assuming you will pass the name as a prop
-}
 
-export default function Home({ name }: HomeProps) {
+
+export default function Home () {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
