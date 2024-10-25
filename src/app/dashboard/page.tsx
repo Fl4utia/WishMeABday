@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../db/firebase/config"; // Adjust to your Firebase config
 import { collection, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore"; // Import for updating and deleting Firestore docs
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { emit } from "process";
 
 interface FriendData {
   id: string; // Make sure you store the document ID
@@ -91,6 +93,24 @@ export default function Dashboard() {
     }
   };
 
+  // Function for handling sendint the email to the destination
+  const sendBirthdayWish = async (email: string, message: string) => {
+    const functions = getFunctions();
+    const sendEmail = httpsCallable(functions, "sendBirthdayWish");
+
+    try {
+      await sendEmail({
+        email, 
+        subject: "Happy Birthday!",
+        message,
+      });
+      console.log("Email sent!");
+    } catch (error) {
+      console.log("Error", error);
+    }
+
+  };
+
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-white dark:bg-white">
             <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
@@ -103,7 +123,11 @@ export default function Dashboard() {
             </button>
             <button
               className="slides-nav__next px-2 py-1 font-mono"
-              onClick={() => router.push("/dashboard")}
+              onClick={() => {
+                const message = formData.message || "Happy Birthday!";
+                sendBirthdayWish(formData.email || "", message);
+                router.push("/dashboard");
+              }}
             >
               Cards
             </button>
