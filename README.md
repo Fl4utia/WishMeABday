@@ -1,12 +1,28 @@
 # Birthday Cards App
 
+<div align="center">
+
+<img src="https://i.ibb.co/VcwYyLd/f.png" alt="Birthday Cards App Icon" width="200"/>
+
+<br/>
+
+<img src="https://s12.gifyu.com/images/bhzhw.gif" alt="Birthday Card Demo" width="800"/>
+
 [![Next.js](https://img.shields.io/badge/Next.js-15.0.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://reactjs.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-11.0-orange?style=for-the-badge&logo=firebase)](https://firebase.google.com/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-GPT--3.5-green?style=for-the-badge&logo=openai)](https://openai.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-Private-red?style=for-the-badge)](LICENSE)
 
-A modern, interactive web application for creating and sending personalized birthday cards with AI-generated messages. Built with Next.js, Firebase, and OpenAI.
+### A modern, interactive web application for creating and sending personalized birthday cards with AI-generated messages.
+
+[Features](#features) • [Installation](#installation) • [Documentation](#documentation) • [Tech Stack](#tech-stack)
+
+</div>
+
+---
 
 ## Project Overview
 
@@ -35,17 +51,28 @@ This application allows users to:
 ## Tech Stack
 
 <p align="center">
+  <img src="https://i.ibb.co/VcwYyLd/f.png" alt="Birthday Cards App" width="120"/>
+</p>
+
+<p align="center">
   <img src="https://skillicons.dev/icons?i=nextjs,typescript,react,tailwind,firebase,nodejs" alt="Tech Stack" />
 </p>
 
-- **Framework**: [Next.js 15.0.0](https://nextjs.org/) (React 19)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Authentication**: Firebase Auth
-- **Database**: Firebase Firestore
-- **AI**: OpenAI API (GPT-3.5-turbo)
-- **Email**: Resend API
-- **Animations**: canvas-confetti
+<div align="center">
+
+| Category | Technologies |
+|----------|-------------|
+| **Frontend** | ![Next.js](https://img.shields.io/badge/Next.js-15.0.0-black?logo=next.js&logoColor=white) ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript&logoColor=white) |
+| **Styling** | ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwind-css&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS-3-1572B6?logo=css3&logoColor=white) |
+| **Backend** | ![Firebase](https://img.shields.io/badge/Firebase-11.0-orange?logo=firebase&logoColor=white) ![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white) |
+| **AI** | ![OpenAI](https://img.shields.io/badge/OpenAI-GPT--3.5-green?logo=openai&logoColor=white) |
+| **Email** | ![Resend](https://img.shields.io/badge/Resend-API-000000) |
+| **Testing** | ![Jest](https://img.shields.io/badge/Jest-29.7-C21325?logo=jest&logoColor=white) ![Testing Library](https://img.shields.io/badge/Testing_Library-React-E33332?logo=testing-library&logoColor=white) |
+| **Tools** | ![npm](https://img.shields.io/badge/npm-10+-CB3837?logo=npm&logoColor=white) ![Git](https://img.shields.io/badge/Git-2.0-F05032?logo=git&logoColor=white) |
+
+</div>
+
+---
 
 ## Installation
 
@@ -203,6 +230,13 @@ npm start
 
 ### Deploy on Vercel (Recommended)
 
+<div align="center">
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Fl4utia/semana_tec)
+
+</div>
+
+**Steps:**
 1. Push your code to GitHub
 2. Import your repository in [Vercel](https://vercel.com)
 3. Add environment variables in Vercel dashboard
@@ -211,6 +245,8 @@ npm start
 ### Other Platforms
 
 See [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying)
+
+---
 
 ## Contributing
 
@@ -228,6 +264,8 @@ See [Next.js deployment documentation](https://nextjs.org/docs/app/building-your
 - Write descriptive comments for complex logic
 - Use environment variables for sensitive data
 
+---
+
 ## Security Notes
 
 - Never commit API keys or secrets to version control
@@ -235,16 +273,37 @@ See [Next.js deployment documentation](https://nextjs.org/docs/app/building-your
 - Review Firebase security rules regularly
 - Use environment variables for all sensitive configuration
 
+---
+
 ## License
 
-This project is private and maintained by Fl4utia.
+This project is private and maintained by [Fl4utia](https://github.com/Fl4utia).
+
+---
 
 ## Acknowledgments
 
-- Built with [Next.js](https://nextjs.org/)
-- Styled with [Tailwind CSS](https://tailwindcss.com/)
-- Powered by [OpenAI](https://openai.com/)
-- Hosted on [Vercel](https://vercel.com/)
+<div align="center">
+
+[![Next.js](https://img.shields.io/badge/Next.js-black?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat-square&logo=openai&logoColor=white)](https://openai.com/)
+[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=flat-square&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com/)
+
+</div>
+
+---
+
+## Support
+
+<div align="center">
+
+[![Open Issue](https://img.shields.io/badge/Open-Issue-red?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Fl4utia/semana_tec/issues)
+
+**Made for celebrating birthdays | Star this repo if you found it helpful**
+
+</div>
 
 ## Support
 
