@@ -1,4 +1,4 @@
-# WishMeABday: Create birthday cards for your friends
+# Create birthday cards for your friends
 
 <div align="center">
 
