@@ -2,11 +2,15 @@
 
 <div align="center">
 
-<img src="https://i.ibb.co/VcwYyLd/f.png" alt="Birthday Cards App Icon" width="200"/>
+<img src="https://i.ibb.co/MxBkTgbF/Chat-GPT-Image-Dec-27-2025-at-01-49-40-PM.jpg" alt="Birthday Cards App Icon" width="200"/>
 
 <br/>
 
-<img src="https://s12.gifyu.com/images/bhzhw.gif" alt="Birthday Card Demo" width="800"/>
+<img src="https://s12.gifyu.com/images/bhzhw.gif" alt="Birthday- Use environment variables for all sensitive configuration
+
+---
+
+## Licensedth="800"/>
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.0.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
@@ -51,7 +55,7 @@ This application allows users to:
 ## Tech Stack
 
 <p align="center">
-  <img src="https://i.ibb.co/VcwYyLd/f.png" alt="Birthday Cards App" width="120"/>
+  <img src="https://i.ibb.co/MxBkTgbF/Chat-GPT-Image-Dec-27-2025-at-01-49-40-PM.jpg" alt="Birthday Cards App" width="120"/>
 </p>
 
 <p align="center">
@@ -226,28 +230,6 @@ npm run build
 npm start
 ```
 
-## Deployment
-
-### Deploy on Vercel (Recommended)
-
-<div align="center">
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Fl4utia/semana_tec)
-
-</div>
-
-**Steps:**
-1. Push your code to GitHub
-2. Import your repository in [Vercel](https://vercel.com)
-3. Add environment variables in Vercel dashboard
-4. Deploy
-
-### Other Platforms
-
-See [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying)
-
----
-
 ## Contributing
 
 1. Fork the repository
@@ -281,34 +263,6 @@ This project is private and maintained by [Fl4utia](https://github.com/Fl4utia).
 
 ---
 
-## Acknowledgments
-
-<div align="center">
-
-[![Next.js](https://img.shields.io/badge/Next.js-black?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat-square&logo=openai&logoColor=white)](https://openai.com/)
-[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=flat-square&logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com/)
-
-</div>
-
----
-
 ## Support
 
-<div align="center">
-
-[![Open Issue](https://img.shields.io/badge/Open-Issue-red?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Fl4utia/semana_tec/issues)
-
-**Made for celebrating birthdays | Star this repo if you found it helpful**
-
-</div>
-
-## Support
-
-For questions or issues, please open an issue on GitHub or contact the maintainers.
-
----
-
-**Note**: This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+For questions or issues, please [open an issue](https://github.com/Fl4utia/semana_tec/issues) on GitHub.
