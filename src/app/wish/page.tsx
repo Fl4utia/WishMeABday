@@ -27,7 +27,7 @@ const fetchBirthdayMessageFromAI = async (description: string) => {
   return data.message;
 };
 
-const FriendMessage: React.FC = () => {
+const FriendMessageContent: React.FC = () => {
   const [isAiMode, setIsAiMode] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -170,7 +170,6 @@ const FriendMessage: React.FC = () => {
   
 
   return (
-    <Suspense>
         <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-white py-8">
           <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
             <nav className="slides-nav__nav rotate-90 transform origin-center">
@@ -313,6 +312,17 @@ const FriendMessage: React.FC = () => {
             </div>
           </form>
         </div>
+  );
+};
+
+const FriendMessage: React.FC = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-black">Loading...</div>
+      </div>
+    }>
+      <FriendMessageContent />
     </Suspense>
   );
 };

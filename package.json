@@ -2,6 +2,10 @@
   "name": "semana_tec",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "react": "19.0.0-rc-65a56d0e-20241020",
+    "react-dom": "19.0.0-rc-65a56d0e-20241020"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
