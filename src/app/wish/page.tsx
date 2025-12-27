@@ -1,27 +1,32 @@
 "use client";
 
-import React, { useState, useEffect , Suspense} from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../db/firebase/config";
-import { doc, setDoc } from "firebase/firestore"; // Firestore functions
+import { doc, setDoc } from "firebase/firestore";
 
-// Import OpenAI API function
+/**
+ * Fetches a personalized birthday message from OpenAI API
+ * @param description - Optional context about the birthday person
+ * @returns AI-generated birthday message
+ */
 const fetchBirthdayMessageFromAI = async (description: string) => {
-    const prompt = description
-      ? `Write a birthday message for a friend based on the following description: ${description}`
-      : "Write a generic birthday message for a friend.(don't mention names))";
-    
-    const response = await fetch("/api/openai", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, max_tokens: 280 }),
-    });
-    
-    const data = await response.json();
-    return data.message; // Assuming the API returns a message in this format
-  };
+  const prompt = description
+    ? `Write a birthday message for a friend based on the following description: ${description}`
+    : "Write a generic birthday message for a friend. (don't mention names)";
+
+  const response = await fetch("/api/openai", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, max_tokens: 280 }),
+  });
+
+  const data = await response.json();
+  return data.message;
+};
+
 const FriendMessage: React.FC = () => {
   const [isAiMode, setIsAiMode] = useState(false);
   const [name, setName] = useState("");
@@ -30,12 +35,13 @@ const FriendMessage: React.FC = () => {
   const [manualMessage, setManualMessage] = useState("");
   const [aiDescription, setAiDescription] = useState("");
   const [error, setError] = useState("");
-  const [userId, setUserId] = useState<string | null>(null); // Track the authenticated user
+  const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const cardType = searchParams.get("cardtype");
 
-  // Firebase auth check
+  // Protect route: redirect to login if user is not authenticated
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -47,26 +53,35 @@ const FriendMessage: React.FC = () => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   const handleToggle = () => {
     setIsAiMode(!isAiMode);
-    setManualMessage(""); 
+    setManualMessage("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    // Validation: Manual mode requires all fields including message
     if (!isAiMode && (!name || !email || !birthday || !manualMessage)) {
       setError("Please fill in all the fields.");
       return;
     }
 
-    setError(""); // Clear error message
+    // Validation: AI mode only requires basic info (message will be generated)
+    if (isAiMode && (!name || !email || !birthday)) {
+      setError("Please fill in name, email, and birthday.");
+      return;
+    }
+
+    setError("");
+    setIsLoading(true);
 
     const uuid = uuidv4();
     let generatedUrl = `http://localhost:3000`;
-    
+
+    // Build card URL based on selected card type
     if (cardType === "1") {
       generatedUrl = `${generatedUrl}/birthday1/${uuid}`;
     } else if (cardType === "2") {
@@ -79,12 +94,14 @@ const FriendMessage: React.FC = () => {
 
     let finalMessage = manualMessage;
 
-    // If AI Mode is enabled, fetch a message from ChatGPT
+    // Generate message with AI if enabled
     if (isAiMode) {
       try {
         finalMessage = await fetchBirthdayMessageFromAI(aiDescription);
       } catch (error) {
+        console.error("AI generation error:", error);
         setError("Error generating AI message. Please try again.");
+        setIsLoading(false);
         return;
       }
     }
@@ -101,77 +118,68 @@ const FriendMessage: React.FC = () => {
       id: uuid,
     };
 
+    // Save to Firebase: user's collection and global cards collection
     try {
       if (userId) {
         const friendDocRef = doc(db, `users/${userId}/friends`, uuid);
         await setDoc(friendDocRef, formData);
       }
-      
+
       const cardDocRef = doc(db, `cards`, uuid);
       await setDoc(cardDocRef, formData);
-  
+
       router.push(generatedUrl);
     } catch (error) {
       console.error("Error writing document:", error);
       setError("There was an issue saving the message. Please try again.");
+      setIsLoading(false);
+      return;
     }
 
-
+    // Check if we should send email notification today
     const today = new Date();
-    const todayMonth = today.getMonth() + 1; // Los meses empiezan desde 0, por eso se suma 1
+    const todayMonth = today.getMonth() + 1;
     const todayDay = today.getDate();
-    
-    // Extraer mes y día del cumpleaños
-    const birthdayDate = new Date(birthday); // Convertir el string a objeto Date
-    const birthdayMonth = birthdayDate.getUTCMonth() + 1; // Extraer el mes (se suma 1)
-    const birthdayDay = birthdayDate.getUTCDate(); // Extraer el día
 
-    // Verificar si el correo es "ximenasaibot@gmail.com" y la fecha coincide (mes y día)
-    if (email === "ximenasaibot@gmail.com" && birthdayMonth === todayMonth && birthdayDay === todayDay) {
-        const firstName = name // El nombre que quieres pasar
-        const link = generatedUrl; // El enlace que quieres pasar
-    
-        try {
-          const res = await fetch('/api/send', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              firstName,
-              link
-            }),
-          });
-    
-          const data = await res.json();
-          console.log(data);
-        } catch (error) {
-          console.error("Error sending email:", error);
-        }
-    } else {
-      console.log("No coincide");
+    const birthdayDate = new Date(birthday);
+    const birthdayMonth = birthdayDate.getUTCMonth() + 1;
+    const birthdayDay = birthdayDate.getUTCDate();
+
+    // Send email only if birthday matches today and email is whitelisted
+    if (
+      email === "ximenasaibot@gmail.com" &&
+      birthdayMonth === todayMonth &&
+      birthdayDay === todayDay
+    ) {
+      try {
+        await fetch("/api/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            firstName: name,
+            link: generatedUrl,
+          }),
+        });
+      } catch (error) {
+        console.error("Error sending email:", error);
+      }
     }
   };
   
 
   return (
     <Suspense>
-        <div className="flex flex-col items-center justify-center h-screen bg-white dark:bg-white">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-white py-8">
           <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
             <nav className="slides-nav__nav rotate-90 transform origin-center">
-            <button
+              <button
                 type="button"
-                className="slides-nav__prev px-2 py-1 font-mono"
+                className="slides-nav__prev px-2 py-1 font-mono hover:text-gray-600 transition-colors"
                 onClick={() => router.push("/cards")}
               >
                 Back
-              </button>
-              <button
-                type="button"
-                className="slides-nav__prev px-2 py-1 font-mono"
-                onClick={handleSubmit}
-              >
-                Next
               </button>
             </nav>
           </section>
@@ -182,7 +190,7 @@ const FriendMessage: React.FC = () => {
             <h2 className="text-xl font-semibold text-black dark:text-black mb-4 text-content">
               Send a Birthday Message
             </h2>
-            {error && <div className="text-red-500 mb-4">{error}</div>}
+            {error && <div className="text-red-500 mb-4 text-sm">{error}</div>}
             <div className="mb-4">
               <label htmlFor="name" className="block text-black dark:text-black mb-1 text-content">
                 Friend's Name
@@ -193,7 +201,7 @@ const FriendMessage: React.FC = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-3 py-2 border border-black rounded bg-white text-black focus:outline-none text-content"
-                required={!isAiMode}
+                required
               />
             </div>
             <div className="mb-4">
@@ -206,7 +214,7 @@ const FriendMessage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3 py-2 border border-black rounded bg-white text-black focus:outline-none text-content"
-                required={!isAiMode}
+                required
               />
             </div>
             <div className="mb-4">
@@ -219,7 +227,7 @@ const FriendMessage: React.FC = () => {
                 value={birthday}
                 onChange={(e) => setBirthday(e.target.value)}
                 className="w-full px-3 py-2 border border-black rounded bg-white text-black focus:outline-none text-content"
-                required={!isAiMode}
+                required
               />
             </div>
             <div className="mb-6 flex items-center justify-between">
@@ -284,6 +292,25 @@ const FriendMessage: React.FC = () => {
                 </div>
               </div>
             )}
+            <div className="mt-6">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full px-2 py-2 font-mono border border-black text-white bg-black rounded hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {isAiMode ? "Generating..." : "Creating..."}
+                  </span>
+                ) : (
+                  <>{isAiMode ? "Generate & Create Card" : "Create Card"}</>
+                )}
+              </button>
+            </div>
           </form>
         </div>
     </Suspense>

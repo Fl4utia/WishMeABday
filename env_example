@@ -1,8 +1,65 @@
-NEXT_PUBLIC_OPENAI_KEY=
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
-GROQ_API_KEY=
+# ==========================================
+# Birthday Cards App - Environment Variables
+# ==========================================
+# Copy this file to .env.local and fill in your actual values
+# NEVER commit .env.local to version control!
+
+# ------------------------------------------
+# OpenAI Configuration
+# ------------------------------------------
+# Get your API key from: https://platform.openai.com/api-keys
+# Used for generating personalized birthday messages with AI
+NEXT_PUBLIC_OPENAI_KEY="your_openai_api_key_here"
+
+# ------------------------------------------
+# Firebase Configuration
+# ------------------------------------------
+# Get these values from Firebase Console > Project Settings > General
+# https://console.firebase.google.com/
+
+# Your Firebase API key
+NEXT_PUBLIC_FIREBASE_API_KEY="your_firebase_api_key_here"
+
+# Your Firebase auth domain (usually: your-project-id.firebaseapp.com)
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your-project-id.firebaseapp.com"
+
+# Your Firebase project ID
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="your-project-id"
+
+# Your Firebase storage bucket (usually: your-project-id.firebasestorage.app)
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="your-project-id.firebasestorage.app"
+
+# Your Firebase messaging sender ID
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="your_messaging_sender_id"
+
+# Your Firebase app ID
+NEXT_PUBLIC_FIREBASE_APP_ID="your_firebase_app_id"
+
+# ------------------------------------------
+# Resend Email Service Configuration
+# ------------------------------------------
+# Get your API key from: https://resend.com/api-keys
+# Used for sending birthday card emails
+NEXT_PUBLIC_RESEND_API_KEY="your_resend_api_key_here"
+
+# ------------------------------------------
+# Google OAuth Configuration (Optional)
+# ------------------------------------------
+# These are optional - Firebase can auto-generate OAuth credentials
+# Only needed if you want to use custom Google OAuth app
+# Get from: https://console.cloud.google.com/apis/credentials
+
+# Google OAuth Client ID
+CLIENT_ID="your_google_client_id"
+
+# Google OAuth Client Secret
+CLIENT_SECRET="your_google_client_secret"
+
+# ------------------------------------------
+# Setup Instructions:
+# ------------------------------------------
+# 1. Copy this file: cp env_example .env.local
+# 2. Fill in all the values above with your actual credentials
+# 3. Enable Google Sign-In in Firebase Console > Authentication
+# 4. Never commit .env.local to git (it's in .gitignore)
+# 5. Restart your development server after making changes

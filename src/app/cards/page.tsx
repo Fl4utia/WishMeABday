@@ -5,19 +5,15 @@ import Image from "next/image";
 import confetti from "canvas-confetti";
 import { auth } from "../db/firebase/config";
 
-
-
-export default function Home () {
+export default function Home() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Check if the user is authenticated
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setIsAuthenticated(true);
       } else {
-        // Redirect to login if not authenticated
         router.push("/");
       }
     });
@@ -30,22 +26,24 @@ export default function Home () {
     });
   };
 
+  /**
+   * Launch confetti animation from clicked card, then navigate to card creation
+   */
   const handleClick = async (
     event: React.MouseEvent<HTMLDivElement>,
     route: string,
     cardType: number
   ) => {
-    // Get the center coordinates of the clicked circle
+    // Get center coordinates of clicked element
     const rect = event.currentTarget.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
     const y = rect.top + rect.height / 2;
 
-    // Screen dimensions for normalizing coordinates
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
 
-    // Launch confetti from the circle's position
-    const duration = 1000; // Confetti duration in ms
+    // Launch confetti animation for 1 second
+    const duration = 1000;
     const end = Date.now() + duration;
 
     const frame = () => {
@@ -67,10 +65,9 @@ export default function Home () {
       }
     };
 
-    // Start confetti animation
     frame();
 
-    // Wait for confetti to finish before redirecting
+    // Navigate after animation completes
     setTimeout(() => {
       router.push(`${route}?cardtype=${cardType}`);
     }, duration);
@@ -78,26 +75,22 @@ export default function Home () {
 
   return (
     <main className="flex flex-col items-center justify-center h-screen text-black">
-      {/* Navigation */}
       <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
-          <nav className="slides-nav__nav rotate-90 transform origin-center">
-            <button
-              className="slides-nav__prev px-2 py-1 font-mono"
-             
-            >
-              Home
-            </button>
-            <button
-              className="slides-nav__next px-2 py-1 font-mono"
-              onClick={() => router.push("/dashboard")}
-            >
-              Cards
-            </button>
-            <button
-              className="slides-nav__next px-2 py-1 font-mono"
-              onClick={handleLogout}
-            >
-              Logout
+        <nav className="slides-nav__nav rotate-90 transform origin-center">
+          <button className="slides-nav__prev px-2 py-1 font-mono">
+            Home
+          </button>
+          <button
+            className="slides-nav__next px-2 py-1 font-mono"
+            onClick={() => router.push("/dashboard")}
+          >
+            Cards
+          </button>
+          <button
+            className="slides-nav__next px-2 py-1 font-mono"
+            onClick={handleLogout}
+          >
+            Logout
             </button>
           </nav>
         </section>

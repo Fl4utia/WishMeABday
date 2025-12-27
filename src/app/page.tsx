@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { db, auth } from "../app/db/firebase/config"; // Firebase config
-import { onAuthStateChanged } from "firebase/auth"; // Import onAuthStateChanged
+import { db, auth } from "../app/db/firebase/config";
+import { onAuthStateChanged } from "firebase/auth";
 
 const slides = [
   { url: "https://source.unsplash.com/nfTA8pdaq9A/2000x1100.png", title1: "Wish Happy Birthday", title2: "to your friends" },
@@ -13,22 +13,23 @@ const slides = [
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Track authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
+  // Listen for authentication state changes
   useEffect(() => {
-    // Listen for auth changes
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        setIsAuthenticated(true);  // User is logged in
+        setIsAuthenticated(true);
       } else {
-        setIsAuthenticated(false); // User is logged out
+        setIsAuthenticated(false);
       }
     });
 
-    return () => unsubscribe(); // Clean up listener
+    return () => unsubscribe();
   }, []);
 
+  // Enable slide navigation via scroll wheel and keyboard
   useEffect(() => {
     const handleScroll = (e: WheelEvent) => {
       if (isSliding) return;
@@ -54,27 +55,26 @@ export default function Home() {
   const prevSlide = () => {
     setIsSliding(true);
     setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
-    setTimeout(() => setIsSliding(false), 700); // Shortened transition time
+    setTimeout(() => setIsSliding(false), 700);
   };
 
   const nextSlide = () => {
     setIsSliding(true);
     setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
-    setTimeout(() => setIsSliding(false), 700); // Shortened transition time
+    setTimeout(() => setIsSliding(false), 700);
   };
 
   const handleButtonClick = () => {
     if (isAuthenticated) {
-      router.push("/cards"); // Redirect to Cards page if logged in
+      router.push("/cards");
     } else {
-      router.push("/login"); // Redirect to Login page if not logged in
+      router.push("/login");
     }
   };
 
   return (
     <main>
       <section className="slides relative w-full h-screen overflow-hidden">
-        {/* Navigation */}
         <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
           <nav className="slides-nav__nav rotate-90 transform origin-center">
             <button
@@ -93,12 +93,10 @@ export default function Home() {
               className="slides-nav__next px-2 py-1 font-mono"
               onClick={handleButtonClick}
             >
-              {isAuthenticated ? "Cards" : "Login"} {/* Conditionally render button text */}
+              {isAuthenticated ? "Cards" : "Login"}
             </button>
           </nav>
         </section>
-
-        {/* Slides */}
         {slides.map((slide, index) => (
           <section
             key={index}

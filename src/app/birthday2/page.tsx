@@ -1,7 +1,5 @@
-// components/BirthdayCard.tsx
-
-import React from 'react';
-import styles from '../modules/BirthdayCard1.module.css';
+import React from "react";
+import styles from "../modules/BirthdayCard1.module.css";
 
 const BirthdayCard: React.FC = () => {
   return (

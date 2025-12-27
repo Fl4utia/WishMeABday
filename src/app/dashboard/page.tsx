@@ -1,15 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { auth, db } from "../db/firebase/config"; // Adjust to your Firebase config
-import { collection, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore"; // Import for updating and deleting Firestore docs
+import { auth, db } from "../db/firebase/config";
+import { collection, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 
 interface FriendData {
-  id: string; // Make sure you store the document ID
+  id: string;
   name: string;
   email: string;
   birthday: string;
-  mode: string; // AI or Manual
+  mode: string;
   message: string;
   cardType: string;
   link: string;
@@ -18,17 +18,15 @@ interface FriendData {
 export default function Dashboard() {
   const [friends, setFriends] = useState<FriendData[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [editFriendId, setEditFriendId] = useState<string | null>(null); // To track which friend is being edited
-  const [formData, setFormData] = useState<Partial<FriendData>>({}); // For holding form data during edits
+  const [editFriendId, setEditFriendId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<Partial<FriendData>>({});
   const router = useRouter();
 
   useEffect(() => {
-    // Check if the user is authenticated
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setIsAuthenticated(true);
       } else {
-        // Redirect to login if not authenticated
         router.push("/");
       }
     });
@@ -41,9 +39,10 @@ export default function Dashboard() {
     });
   };
 
+  // Fetch user's saved birthday cards on component mount
   useEffect(() => {
     const fetchFriends = async () => {
-      const userId = auth.currentUser?.uid; // Get the current authenticated user's ID
+      const userId = auth.currentUser?.uid;
       if (userId) {
         const friendsCollectionRef = collection(db, `users/${userId}/friends`);
         const friendsSnapshot = await getDocs(friendsCollectionRef);
@@ -58,19 +57,24 @@ export default function Dashboard() {
     fetchFriends();
   }, []);
 
-  // Handle form input changes for editing
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof FriendData) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: keyof FriendData
+  ) => {
     setFormData({ ...formData, [field]: e.target.value });
   };
 
-  // Function to handle saving updates
+  /**
+   * Save edited card data to Firestore and refresh the list
+   */
   const handleSave = async (friendId: string) => {
     const userId = auth.currentUser?.uid;
     if (userId && formData) {
       const friendDocRef = doc(db, `users/${userId}/friends`, friendId);
       await updateDoc(friendDocRef, formData);
       setEditFriendId(null);
-      // Re-fetch friends after update
+
+      // Re-fetch updated data
       const friendsCollectionRef = collection(db, `users/${userId}/friends`);
       const friendsSnapshot = await getDocs(friendsCollectionRef);
       const updatedFriends = friendsSnapshot.docs.map((doc) => ({
@@ -81,36 +85,35 @@ export default function Dashboard() {
     }
   };
 
-  // Function to handle deleting a friend
   const handleDelete = async (friendId: string) => {
     const userId = auth.currentUser?.uid;
     if (userId) {
       const friendDocRef = doc(db, `users/${userId}/friends`, friendId);
       await deleteDoc(friendDocRef);
-      setFriends(friends.filter(friend => friend.id !== friendId)); // Remove from state
+      setFriends(friends.filter((friend) => friend.id !== friendId));
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-white dark:bg-white">
-            <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
-          <nav className="slides-nav__nav rotate-90 transform origin-center">
-            <button
-              className="slides-nav__prev px-2 py-1 font-mono"
-             onClick={() => router.push("/cards")}
-            >
-              Home
-            </button>
-            <button
-              className="slides-nav__next px-2 py-1 font-mono"
-              onClick={() => router.push("/dashboard")}
-            >
-              Cards
-            </button>
-            <button
-              className="slides-nav__next px-2 py-1 font-mono"
-              onClick={handleLogout}
-            >
+      <section className="slides-nav fixed right-[-5%] md:right-[2%] flex items-center h-full z-10">
+        <nav className="slides-nav__nav rotate-90 transform origin-center">
+          <button
+            className="slides-nav__prev px-2 py-1 font-mono"
+            onClick={() => router.push("/cards")}
+          >
+            Home
+          </button>
+          <button
+            className="slides-nav__next px-2 py-1 font-mono"
+            onClick={() => router.push("/dashboard")}
+          >
+            Cards
+          </button>
+          <button
+            className="slides-nav__next px-2 py-1 font-mono"
+            onClick={handleLogout}
+          >
               Logout
             </button>
           </nav>

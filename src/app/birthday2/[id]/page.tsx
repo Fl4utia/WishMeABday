@@ -1,42 +1,37 @@
 "use client";
-import styles from '../../modules/BirthdayCard1.module.css';
+import styles from "../../modules/BirthdayCard1.module.css";
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation"; 
-import { doc, getDoc } from "firebase/firestore"; 
-import { db , auth} from "../../db/firebase/config"; 
-import { onAuthStateChanged } from "firebase/auth"; 
+import { useParams, useRouter } from "next/navigation";
+import { doc, getDoc } from "firebase/firestore";
+import { db, auth } from "../../db/firebase/config";
+import { onAuthStateChanged } from "firebase/auth";
 
 const BirthdayCard: React.FC = () => {
-  const { id } = useParams(); // Use useParams to get the id
+  const { id } = useParams();
   const [cardData, setCardData] = useState<{ message: string } | null>(null);
   const [error, setError] = useState("");
-  const [isAuth, setIsAuth] = useState(false); // Track authentication status
+  const [isAuth, setIsAuth] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    // Check authentication state
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuth(!!user); // Set to true if user exists
+      setIsAuth(!!user);
     });
 
-    // Clean up subscription
     return () => unsubscribe();
   }, []);
 
+  // Fetch card data from Firestore using the ID from URL
   useEffect(() => {
-    // Check if id is available
     if (id) {
       const fetchCardData = async () => {
         try {
-          // Reference the document with the id in the "cards" collection
           const cardDocRef = doc(db, "cards", id as string);
           const cardDoc = await getDoc(cardDocRef);
 
           if (cardDoc.exists()) {
-            // Set the card data to the state if the document exists
             setCardData(cardDoc.data() as { message: string });
           } else {
-            // Set an error if the document doesn't exist
             setError("Card not found.");
           }
         } catch (error) {
@@ -46,14 +41,12 @@ const BirthdayCard: React.FC = () => {
       };
       fetchCardData();
     }
-  }, [id]); // Only depend on id
+  }, [id]);
 
-  // Display error message if there's an error
   if (error) {
     return <div>{error}</div>;
   }
 
-  // Show loading while data is being fetched
   if (!cardData) {
     return (
       <div className="load-wrapp">
