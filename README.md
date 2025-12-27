@@ -1,4 +1,4 @@
-# Birthday Cards App
+# WishMeABday: Create birthday cards for your friends
 
 <div align="center">
 
