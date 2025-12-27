@@ -6,8 +6,6 @@
 
 <br/>
 
-<img src="https://s12.gifyu.com/images/bhzhw.gif" alt="Birthday- Use environment variables for all sensitive configuration
-
 ---
 
 ## Licensedth="800"/>
