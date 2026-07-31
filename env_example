@@ -5,11 +5,16 @@
 # NEVER commit .env.local to version control!
 
 # ------------------------------------------
-# OpenAI Configuration
+# AI Message Generation
 # ------------------------------------------
-# Get your API key from: https://platform.openai.com/api-keys
-# Used for generating personalized birthday messages with AI
-NEXT_PUBLIC_OPENAI_KEY="your_openai_api_key_here"
+# Groq API key used by server-side AI message generation
+GROQ_API_KEY="your_groq_api_key_here"
+
+# Optional Groq model override (default: llama-3.1-8b-instant)
+GROQ_MODEL="llama-3.1-8b-instant"
+
+# Free daily AI usage limit for /api/openai requests (global app quota)
+AI_DAILY_QUOTA="25"
 
 # ------------------------------------------
 # Firebase Configuration
@@ -41,6 +46,11 @@ NEXT_PUBLIC_FIREBASE_APP_ID="your_firebase_app_id"
 # Get your API key from: https://resend.com/api-keys
 # Used for sending birthday card emails
 NEXT_PUBLIC_RESEND_API_KEY="your_resend_api_key_here"
+RESEND_API_KEY="your_resend_api_key_here"
+
+# Use a verified sender/domain in Resend to avoid silent delivery failures
+# Example: Birthday App <noreply@yourdomain.com>
+RESEND_FROM_EMAIL="Happy birthday <onboarding@resend.dev>"
 
 # ------------------------------------------
 # Google OAuth Configuration (Optional)

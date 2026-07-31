@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../db/firebase/config";
 import { collection, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { deleteStoredCard, getAllStoredCards, saveCardData } from "@/lib/utils/cards";
 
 interface FriendData {
   id: string;
@@ -44,15 +45,33 @@ export default function Dashboard() {
     const fetchFriends = async () => {
       const userId = auth.currentUser?.uid;
       if (userId) {
-        const friendsCollectionRef = collection(db, `users/${userId}/friends`);
-        const friendsSnapshot = await getDocs(friendsCollectionRef);
-        const friendsData = friendsSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as FriendData[];
+        try {
+          const friendsCollectionRef = collection(db, `users/${userId}/friends`);
+          const friendsSnapshot = await getDocs(friendsCollectionRef);
+          const friendsData = friendsSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as FriendData[];
 
-        setFriends(friendsData);
+          setFriends(friendsData);
+          return;
+        } catch (error) {
+          console.warn("Firestore is unavailable, using local card fallback:", error);
+        }
       }
+
+      const storedFriends = getAllStoredCards().map((card) => ({
+        id: card.id,
+        name: card.name,
+        email: card.email,
+        birthday: card.birthday,
+        mode: card.mode ?? "MANUAL",
+        message: card.message,
+        cardType: card.cardType ?? "",
+        link: card.link,
+      })) as FriendData[];
+
+      setFriends(storedFriends);
     };
     fetchFriends();
   }, []);
@@ -69,29 +88,44 @@ export default function Dashboard() {
    */
   const handleSave = async (friendId: string) => {
     const userId = auth.currentUser?.uid;
-    if (userId && formData) {
-      const friendDocRef = doc(db, `users/${userId}/friends`, friendId);
-      await updateDoc(friendDocRef, formData);
-      setEditFriendId(null);
+    const existingFriend = friends.find((friend) => friend.id === friendId);
 
-      // Re-fetch updated data
-      const friendsCollectionRef = collection(db, `users/${userId}/friends`);
-      const friendsSnapshot = await getDocs(friendsCollectionRef);
-      const updatedFriends = friendsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as FriendData[];
-      setFriends(updatedFriends);
+    if (existingFriend) {
+      const updatedFriend = {
+        ...existingFriend,
+        ...formData,
+      } as FriendData;
+
+      if (userId) {
+        try {
+          const friendDocRef = doc(db, `users/${userId}/friends`, friendId);
+          await updateDoc(friendDocRef, formData);
+        } catch (error) {
+          console.warn("Unable to update Firestore entry, storing locally instead:", error);
+        }
+      }
+
+      saveCardData(updatedFriend as any);
+      setFriends((currentFriends) =>
+        currentFriends.map((friend) => (friend.id === friendId ? updatedFriend : friend))
+      );
+      setEditFriendId(null);
     }
   };
 
   const handleDelete = async (friendId: string) => {
     const userId = auth.currentUser?.uid;
     if (userId) {
-      const friendDocRef = doc(db, `users/${userId}/friends`, friendId);
-      await deleteDoc(friendDocRef);
-      setFriends(friends.filter((friend) => friend.id !== friendId));
+      try {
+        const friendDocRef = doc(db, `users/${userId}/friends`, friendId);
+        await deleteDoc(friendDocRef);
+      } catch (error) {
+        console.warn("Unable to delete Firestore entry, removing local copy instead:", error);
+      }
     }
+
+    deleteStoredCard(friendId);
+    setFriends(friends.filter((friend) => friend.id !== friendId));
   };
 
   return (

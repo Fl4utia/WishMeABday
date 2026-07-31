@@ -6,13 +6,19 @@ import { v4 as uuidv4 } from "uuid";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../db/firebase/config";
 import { doc, setDoc } from "firebase/firestore";
+import { saveCardData } from "@/lib/utils/cards";
+
+interface AIApiResponse {
+  message: string;
+  aiAvailable?: boolean;
+}
 
 /**
  * Fetches a personalized birthday message from OpenAI API
  * @param description - Optional context about the birthday person
  * @returns AI-generated birthday message
  */
-const fetchBirthdayMessageFromAI = async (description: string) => {
+const fetchBirthdayMessageFromAI = async (description: string): Promise<AIApiResponse> => {
   const prompt = description
     ? `Write a birthday message for a friend based on the following description: ${description}`
     : "Write a generic birthday message for a friend. (don't mention names)";
@@ -20,11 +26,30 @@ const fetchBirthdayMessageFromAI = async (description: string) => {
   const response = await fetch("/api/openai", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, max_tokens: 280 }),
+    body: JSON.stringify({ prompt }),
   });
 
   const data = await response.json();
-  return data.message;
+  if (!response.ok) {
+    const error = new Error(data?.details || data?.error || "AI generation failed");
+    (error as Error & { quota?: Partial<AIApiResponse> }).quota = {
+      aiAvailable: data?.aiAvailable,
+    };
+    throw error;
+  }
+
+  return data as AIApiResponse;
+};
+
+const fetchAIQuotaStatus = async (): Promise<Partial<AIApiResponse>> => {
+  const response = await fetch("/api/openai", { method: "GET" });
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.details || data?.error || "Unable to fetch AI quota status");
+  }
+
+  return data as Partial<AIApiResponse>;
 };
 
 const FriendMessageContent: React.FC = () => {
@@ -34,7 +59,9 @@ const FriendMessageContent: React.FC = () => {
   const [birthday, setBirthday] = useState("");
   const [manualMessage, setManualMessage] = useState("");
   const [aiDescription, setAiDescription] = useState("");
+  const [isAiAvailable, setIsAiAvailable] = useState(true);
   const [error, setError] = useState("");
+  const [emailStatus, setEmailStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
@@ -55,7 +82,26 @@ const FriendMessageContent: React.FC = () => {
     return () => unsubscribe();
   }, [router]);
 
+  useEffect(() => {
+    const loadQuota = async () => {
+      try {
+        const quota = await fetchAIQuotaStatus();
+        setIsAiAvailable(quota.aiAvailable !== false);
+      } catch (quotaError) {
+        console.warn("Unable to load AI quota status:", quotaError);
+        setIsAiAvailable(false);
+      }
+    };
+
+    loadQuota();
+  }, []);
+
   const handleToggle = () => {
+    if (!isAiMode && !isAiAvailable) {
+      setError("AI mode is currently unavailable.");
+      return;
+    }
+
     setIsAiMode(!isAiMode);
     setManualMessage("");
   };
@@ -75,11 +121,19 @@ const FriendMessageContent: React.FC = () => {
       return;
     }
 
+    if (isAiMode && !isAiAvailable) {
+      setError("AI mode is currently unavailable.");
+      return;
+    }
+
     setError("");
+    setEmailStatus("");
     setIsLoading(true);
 
     const uuid = uuidv4();
-    let generatedUrl = `http://localhost:3000`;
+    const baseUrl =
+      typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+    let generatedUrl = baseUrl;
 
     // Build card URL based on selected card type
     if (cardType === "1") {
@@ -97,10 +151,22 @@ const FriendMessageContent: React.FC = () => {
     // Generate message with AI if enabled
     if (isAiMode) {
       try {
-        finalMessage = await fetchBirthdayMessageFromAI(aiDescription);
+        const aiResponse = await fetchBirthdayMessageFromAI(aiDescription);
+        finalMessage = aiResponse.message;
+        setIsAiAvailable(aiResponse.aiAvailable !== false);
       } catch (error) {
         console.error("AI generation error:", error);
-        setError("Error generating AI message. Please try again.");
+        const quotaInfo = (error as Error & { quota?: Partial<AIApiResponse> }).quota;
+        if (quotaInfo) {
+          setIsAiAvailable(quotaInfo.aiAvailable !== false);
+          if (quotaInfo.aiAvailable === false) {
+            setIsAiMode(false);
+          }
+        }
+
+        setError(
+          error instanceof Error ? error.message : "Error generating AI message. Please try again."
+        );
         setIsLoading(false);
         return;
       }
@@ -118,7 +184,9 @@ const FriendMessageContent: React.FC = () => {
       id: uuid,
     };
 
-    // Save to Firebase: user's collection and global cards collection
+    saveCardData(formData);
+
+    // Save to Firebase when possible, but fall back gracefully if Firestore rules block the write.
     try {
       if (userId) {
         const friendDocRef = doc(db, `users/${userId}/friends`, uuid);
@@ -127,45 +195,41 @@ const FriendMessageContent: React.FC = () => {
 
       const cardDocRef = doc(db, `cards`, uuid);
       await setDoc(cardDocRef, formData);
-
-      router.push(generatedUrl);
     } catch (error) {
-      console.error("Error writing document:", error);
-      setError("There was an issue saving the message. Please try again.");
-      setIsLoading(false);
-      return;
+      console.warn("Firestore write unavailable, using local fallback instead:", error);
     }
 
-    // Check if we should send email notification today
-    const today = new Date();
-    const todayMonth = today.getMonth() + 1;
-    const todayDay = today.getDate();
-
-    const birthdayDate = new Date(birthday);
-    const birthdayMonth = birthdayDate.getUTCMonth() + 1;
-    const birthdayDay = birthdayDate.getUTCDate();
-
-    // Send email only if birthday matches today and email is whitelisted
-    if (
-      email === "ximenasaibot@gmail.com" &&
-      birthdayMonth === todayMonth &&
-      birthdayDay === todayDay
-    ) {
+    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       try {
-        await fetch("/api/send", {
+        const response = await fetch("/api/send", {
           method: "POST",
+          keepalive: true,
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             firstName: name,
             link: generatedUrl,
+            recipientEmail: email,
           }),
         });
+
+        if (!response.ok) {
+          const errorBody = await response.json().catch(() => null);
+          const errorMessage = errorBody?.details || errorBody?.error || "Email delivery failed.";
+          setEmailStatus(`Email failed: ${errorMessage}`);
+          console.warn("Email delivery failed:", errorBody);
+        } else {
+          setEmailStatus("Email sent successfully.");
+        }
       } catch (error) {
-        console.error("Error sending email:", error);
+        setEmailStatus("Email failed: Could not reach the email service.");
+        console.warn("Error sending email:", error);
       }
     }
+
+    setIsLoading(false);
+    router.push(generatedUrl);
   };
   
 
@@ -190,6 +254,15 @@ const FriendMessageContent: React.FC = () => {
               Send a Birthday Message
             </h2>
             {error && <div className="text-red-500 mb-4 text-sm">{error}</div>}
+            {emailStatus && (
+              <div
+                className={`mb-4 text-sm ${
+                  emailStatus.startsWith("Email failed") ? "text-red-500" : "text-green-700"
+                }`}
+              >
+                {emailStatus}
+              </div>
+            )}
             <div className="mb-4">
               <label htmlFor="name" className="block text-black dark:text-black mb-1 text-content">
                 Friend's Name
@@ -251,22 +324,24 @@ const FriendMessageContent: React.FC = () => {
             </div>
             {isAiMode ? (
               <div className="mb-4">
-                <label
-                  htmlFor="aiDescription"
-                  className="block text-black dark:text-black mb-1 text-content"
-                >
-                  Optional Description for AI Message
-                </label>
-                <textarea
-                  id="aiDescription"
-                  value={aiDescription}
-                  onChange={(e) => setAiDescription(e.target.value)}
-                  maxLength={300}
-                  className="w-full px-3 py-2 border border-black rounded bg-white text-black focus:outline-none text-content"
-                  placeholder="My friend Diego is turning 30 and loves cats!"
-                />
-                <div className="text-right text-black dark:text-black">
-                  {aiDescription.length}/300
+                <div>
+                  <label
+                    htmlFor="aiDescription"
+                    className="block text-black dark:text-black mb-1 text-content"
+                  >
+                    Optional Description for AI Message
+                  </label>
+                  <textarea
+                    id="aiDescription"
+                    value={aiDescription}
+                    onChange={(e) => setAiDescription(e.target.value)}
+                    maxLength={300}
+                    className="w-full px-3 py-2 border border-black rounded bg-white text-black focus:outline-none text-content"
+                    placeholder="My friend loves candy and old-school video games"
+                  />
+                  <div className="text-right text-black dark:text-black">
+                    {aiDescription.length}/300
+                  </div>
                 </div>
               </div>
             ) : (
@@ -294,7 +369,7 @@ const FriendMessageContent: React.FC = () => {
             <div className="mt-6">
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || (isAiMode && !isAiAvailable)}
                 className="w-full px-2 py-2 font-mono border border-black text-white bg-black rounded hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
@@ -306,7 +381,13 @@ const FriendMessageContent: React.FC = () => {
                     {isAiMode ? "Generating..." : "Creating..."}
                   </span>
                 ) : (
-                  <>{isAiMode ? "Generate & Create Card" : "Create Card"}</>
+                  <>
+                    {isAiMode
+                      ? isAiAvailable
+                        ? "Generate & Create Card"
+                        : "AI quota reached for today"
+                      : "Create Card"}
+                  </>
                 )}
               </button>
             </div>

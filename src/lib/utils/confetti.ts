@@ -34,7 +34,8 @@ export function launchConfetti(
       y: y / screenHeight,
     };
 
-    const end = Date.now() + duration;
+    const frameCount = Math.max(1, Math.ceil(duration / 16));
+    let frameIndex = 0;
 
     const frame = () => {
       // Launch confetti in two directions
@@ -44,7 +45,7 @@ export function launchConfetti(
         spread: CONFETTI_CONFIG.SPREAD,
         origin,
       });
-      
+
       confetti({
         particleCount: CONFETTI_CONFIG.PARTICLE_COUNT,
         angle: CONFETTI_CONFIG.ANGLE_2,
@@ -52,8 +53,10 @@ export function launchConfetti(
         origin,
       });
 
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
+      frameIndex += 1;
+
+      if (frameIndex < frameCount) {
+        setTimeout(frame, 16);
       } else {
         resolve();
       }
@@ -67,7 +70,8 @@ export function launchConfetti(
  * Launches confetti from screen center
  */
 export function launchCenterConfetti(duration: number = CONFETTI_CONFIG.DURATION): void {
-  const end = Date.now() + duration;
+  const frameCount = Math.max(1, Math.ceil(duration / 16));
+  let frameIndex = 0;
 
   const frame = () => {
     confetti({
@@ -76,7 +80,7 @@ export function launchCenterConfetti(duration: number = CONFETTI_CONFIG.DURATION
       spread: 55,
       origin: { x: 0.5, y: 0.5 },
     });
-    
+
     confetti({
       particleCount: CONFETTI_CONFIG.PARTICLE_COUNT * 2,
       angle: 120,
@@ -84,8 +88,10 @@ export function launchCenterConfetti(duration: number = CONFETTI_CONFIG.DURATION
       origin: { x: 0.5, y: 0.5 },
     });
 
-    if (Date.now() < end) {
-      requestAnimationFrame(frame);
+    frameIndex += 1;
+
+    if (frameIndex < frameCount) {
+      setTimeout(frame, 16);
     }
   };
 

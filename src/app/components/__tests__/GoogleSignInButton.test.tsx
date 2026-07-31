@@ -26,10 +26,10 @@ describe('GoogleSignInButton', () => {
   });
 
   it('should render the button', () => {
-    const { getByText, getByAlt } = render(<GoogleSignInButton />);
+    const { getByText, getByAltText } = render(<GoogleSignInButton />);
 
     expect(getByText('Sign in with Google')).toBeInTheDocument();
-    expect(getByAlt('Google')).toBeInTheDocument();
+    expect(getByAltText('Google')).toBeInTheDocument();
   });
 
   it('should have correct role attribute', () => {
