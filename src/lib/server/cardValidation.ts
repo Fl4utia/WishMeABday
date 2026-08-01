@@ -5,35 +5,29 @@ export interface CreateCardInput {
   id: string;
   name: string;
   email: string;
-  birthday: string;
+  birthday?: string;
   cardType: string;
   message: string;
   mode: string;
+  sendAt: string;
 }
 
 export interface SanitizedCardData {
   id: string;
   name: string;
   email: string;
-  birthday: string;
+  birthday?: string;
   cardType: string;
   message: string;
   mode: string;
   link: string;
   createdAt: string;
+  sendAt: string;
+  emailSentAt?: string;
 }
 
 function cleanText(value: string): string {
   return value.replace(/[\u0000-\u001f\u007f<>]/g, "").trim();
-}
-
-function isValidBirthday(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return false;
-  }
-
-  const date = new Date(`${value}T00:00:00.000Z`);
-  return !Number.isNaN(date.getTime());
 }
 
 export function validateCardInput(input: unknown): CreateCardInput {
@@ -42,7 +36,7 @@ export function validateCardInput(input: unknown): CreateCardInput {
   }
 
   const candidate = input as Partial<Record<keyof CreateCardInput, unknown>>;
-  const requiredFields: Array<keyof CreateCardInput> = ["id", "name", "email", "birthday", "cardType", "message", "mode"];
+  const requiredFields: Array<keyof CreateCardInput> = ["id", "name", "email", "cardType", "message", "mode", "sendAt"];
 
   for (const field of requiredFields) {
     if (typeof candidate[field] !== "string" || !candidate[field]?.trim()) {
@@ -53,10 +47,13 @@ export function validateCardInput(input: unknown): CreateCardInput {
   const id = cleanText(candidate.id as string);
   const name = cleanText(candidate.name as string);
   const email = cleanText(candidate.email as string).toLowerCase();
-  const birthday = cleanText(candidate.birthday as string);
   const cardType = cleanText(candidate.cardType as string);
   const message = cleanText(candidate.message as string);
   const mode = cleanText(candidate.mode as string);
+  const birthday = typeof candidate.birthday === "string" && candidate.birthday.trim().length > 0
+    ? cleanText(candidate.birthday)
+    : undefined;
+  const sendAt = cleanText(candidate.sendAt as string);
 
   if (!UUID_REGEX.test(id)) {
     throw new Error("Invalid card id");
@@ -68,10 +65,6 @@ export function validateCardInput(input: unknown): CreateCardInput {
 
   if (email.length > 254 || !EMAIL_REGEX.test(email)) {
     throw new Error("Invalid email address");
-  }
-
-  if (!isValidBirthday(birthday)) {
-    throw new Error("Invalid birthday");
   }
 
   if (!["1", "2", "3"].includes(cardType)) {
@@ -86,6 +79,18 @@ export function validateCardInput(input: unknown): CreateCardInput {
     throw new Error("Invalid mode");
   }
 
+  if (sendAt) {
+    const sendDate = new Date(sendAt);
+    if (Number.isNaN(sendDate.getTime())) {
+      throw new Error("Invalid send date");
+    }
+
+    const now = new Date();
+    if (sendDate.getTime() < now.getTime() - 60000) {
+      throw new Error("Send date must be in the future");
+    }
+  }
+
   return {
     id,
     name,
@@ -94,6 +99,7 @@ export function validateCardInput(input: unknown): CreateCardInput {
     cardType,
     message,
     mode,
+    sendAt,
   };
 }
 
@@ -108,5 +114,7 @@ export function buildCardData(input: CreateCardInput, origin: string): Sanitized
     ...input,
     link: `${origin}${cardPath}`,
     createdAt: new Date().toISOString(),
+    sendAt: input.sendAt,
+    ...(input.birthday ? { birthday: input.birthday } : {}),
   };
 }

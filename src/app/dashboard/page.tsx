@@ -2,25 +2,40 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../db/firebase/config";
-import { collection, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { deleteStoredCard, getAllStoredCards, saveCardData } from "@/lib/utils/cards";
+import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
+import { deleteStoredCard, getAllStoredCards } from "@/lib/utils/cards";
 
 interface FriendData {
   id: string;
   name: string;
   email: string;
-  birthday: string;
-  mode: string;
+  sendAt?: string;
+  emailSentAt?: string;
   message: string;
   cardType: string;
   link: string;
 }
 
+function canCancelSending(friend: FriendData): boolean {
+  return !friend.emailSentAt;
+}
+
+function formatDeliveryDate(sendAt?: string): string {
+  if (!sendAt) {
+    return "Not scheduled";
+  }
+
+  const value = new Date(sendAt);
+  if (Number.isNaN(value.getTime())) {
+    return sendAt;
+  }
+
+  return value.toLocaleDateString();
+}
+
 export default function Dashboard() {
   const [friends, setFriends] = useState<FriendData[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [editFriendId, setEditFriendId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<FriendData>>({});
   const router = useRouter();
 
   useEffect(() => {
@@ -40,7 +55,7 @@ export default function Dashboard() {
     });
   };
 
-  // Fetch user's saved birthday cards on component mount
+  // Fetch user's saved cards on component mount
   useEffect(() => {
     const fetchFriends = async () => {
       const userId = auth.currentUser?.uid;
@@ -64,8 +79,8 @@ export default function Dashboard() {
         id: card.id,
         name: card.name,
         email: card.email,
-        birthday: card.birthday,
-        mode: card.mode ?? "MANUAL",
+        sendAt: typeof card.sendAt === "string" ? card.sendAt : undefined,
+        emailSentAt: typeof card.emailSentAt === "string" ? card.emailSentAt : undefined,
         message: card.message,
         cardType: card.cardType ?? "",
         link: card.link,
@@ -76,44 +91,12 @@ export default function Dashboard() {
     fetchFriends();
   }, []);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    field: keyof FriendData
-  ) => {
-    setFormData({ ...formData, [field]: e.target.value });
-  };
-
-  /**
-   * Save edited card data to Firestore and refresh the list
-   */
-  const handleSave = async (friendId: string) => {
-    const userId = auth.currentUser?.uid;
-    const existingFriend = friends.find((friend) => friend.id === friendId);
-
-    if (existingFriend) {
-      const updatedFriend = {
-        ...existingFriend,
-        ...formData,
-      } as FriendData;
-
-      if (userId) {
-        try {
-          const friendDocRef = doc(db, `users/${userId}/friends`, friendId);
-          await updateDoc(friendDocRef, formData);
-        } catch (error) {
-          console.warn("Unable to update Firestore entry, storing locally instead:", error);
-        }
-      }
-
-      saveCardData(updatedFriend as any);
-      setFriends((currentFriends) =>
-        currentFriends.map((friend) => (friend.id === friendId ? updatedFriend : friend))
-      );
-      setEditFriendId(null);
+  const handleCancelSending = async (friendId: string) => {
+    const friend = friends.find((item) => item.id === friendId);
+    if (!friend || !canCancelSending(friend)) {
+      return;
     }
-  };
 
-  const handleDelete = async (friendId: string) => {
     const userId = auth.currentUser?.uid;
     if (userId) {
       try {
@@ -159,8 +142,7 @@ export default function Dashboard() {
             <tr className="bg-gray-100 text-left">
               <th className="px-4 py-2">Name</th>
               <th className="px-4 py-2">Email</th>
-              <th className="px-6 py-2">Birthday</th>
-              <th className="px-2 py-2">Mode</th>
+              <th className="px-6 py-2">Expected Delivery</th>
               <th className="px-4 py-2">Message</th>
               <th className="px-4 py-2">Link</th>
               <th className="px-4 py-2">Actions</th>
@@ -170,55 +152,16 @@ export default function Dashboard() {
             {friends.map((friend) => (
               <tr key={friend.id} className="border-t">
                 <td className="px-4 py-2 max-w-xs truncate">
-                  {editFriendId === friend.id ? (
-                    <input
-                      type="text"
-                      value={formData.name || friend.name}
-                      onChange={(e) => handleChange(e, 'name')}
-                      className="border p-1"
-                    />
-                  ) : (
-                    friend.name
-                  )}
+                  {friend.name}
                 </td>
                 <td className="px-4 py-2 max-w-xs truncate">
-                  {editFriendId === friend.id ? (
-                    <input
-                      type="email"
-                      value={formData.email || friend.email}
-                      onChange={(e) => handleChange(e, 'email')}
-                      className="border p-1"
-                    />
-                  ) : (
-                    friend.email
-                  )}
+                  {friend.email}
                 </td>
                 <td className="px-4 py-2 text-sm">
-                  {friend.birthday} 
-                </td>
-                <td className="px-4 py-2 items-center text-sm">
-                  {friend.mode === "AI" ? (
-                    <img
-                      src="https://svgshare.com/i/1Bt7.svg"
-                      alt="Spark"
-                      title="AI Generated"
-                      className="w-4 h-4 items-center"
-                    />
-                  ) : (
-                    "Manual"
-                  )}
+                  {formatDeliveryDate(friend.sendAt)}
                 </td>
                 <td className="px-4 py-2 max-w-lg truncate-2-lines items-center">
-                  {editFriendId === friend.id && friend.mode === "MANUAL" ? (
-                    <input
-                      type="text"
-                      value={formData.message || friend.message}
-                      onChange={(e) => handleChange(e, 'message')}
-                      className="border p-1"
-                    />
-                  ) : (
-                    friend.message
-                  )}
+                  {friend.message}
                 </td>
                 <td className="px-4 py-2">
                 <a
@@ -231,23 +174,15 @@ export default function Dashboard() {
                   </a>
                 </td>
                 <td className="px-4 py-2">
-                <button onClick={() => handleDelete(friend.id)} className="hover:text-red-600">
-                <img src='https://svgshare.com/i/1BqM.svg' alt='trash' title='Delete' className="w-4 h-4" />
-                </button>
-                  {editFriendId === friend.id ? (
+                  {canCancelSending(friend) ? (
                     <button
-                      onClick={() => handleSave(friend.id)}
-                      className="text-green-500 hover:text-green-700"
+                      onClick={() => handleCancelSending(friend.id)}
+                      className="text-red-600 hover:text-red-800"
                     >
-                      Save
+                      Cancel Sending
                     </button>
                   ) : (
-                    <button
-                      onClick={() => setEditFriendId(friend.id)}
-                      className="text-yellow-500 hover:text-yellow-700"
-                    >
-                      Edit
-                    </button>
+                    <span className="text-gray-500 text-sm">Sent</span>
                   )}
                 </td>
               </tr>

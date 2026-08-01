@@ -145,13 +145,18 @@ This application allows users to:
 
 ## Environment Variables
 
-Create a `.env.local` file with the following variables or look at the env.example template:
+Create a `.env.local` file with the following variables or look at the `env_example` template:
 
 ```bash
 # Groq AI Configuration
 GROQ_API_KEY=your_groq_api_key_here
 GROQ_MODEL=llama-3.1-8b-instant
 AI_DAILY_QUOTA=25
+
+# Firebase Admin (server-only; required for public card lookup and secure card writes)
+FIREBASE_ADMIN_PROJECT_ID=your_project_id
+FIREBASE_ADMIN_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
+FIREBASE_ADMIN_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n
 
 # Firebase Configuration
 NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
@@ -162,12 +167,24 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 
 # Resend Email Configuration
-NEXT_PUBLIC_RESEND_API_KEY=your_resend_api_key
+RESEND_API_KEY=your_resend_api_key
+RESEND_FROM_EMAIL=Happy birthday <onboarding@resend.dev>
+
+# Optional secret for scheduled card delivery cron calls
+CRON_SECRET=your_cron_secret_here
 
 # Google OAuth (Optional - Firebase auto-generates if not provided)
 CLIENT_ID=your_google_client_id
 CLIENT_SECRET=your_google_client_secret
 ```
+
+Where to get them:
+
+- `GROQ_API_KEY`: Groq dashboard at https://console.groq.com/keys
+- `FIREBASE_ADMIN_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, `FIREBASE_ADMIN_PRIVATE_KEY`: Firebase Console > Project settings > Service accounts > Generate new private key
+- `NEXT_PUBLIC_FIREBASE_*`: Firebase Console > Project settings > Your apps > Web app config
+- `RESEND_API_KEY` and `RESEND_FROM_EMAIL`: Resend dashboard; use a verified sender/domain for best deliverability
+- `CRON_SECRET`: Any strong random string you use to protect the scheduled email endpoint
 
 **Important**: Never commit `.env.local` to version control. Use `env_example` as a template.
 
@@ -206,8 +223,8 @@ semana_tec/
 1. **Landing Page**: Scroll or use arrow keys to navigate through introduction slides
 2. **Login**: Click "Login" and authenticate with your Google account
 3. **Select Card**: Choose from three card designs on the cards page
-4. **Customize**: Add recipient information and generate AI message
-5. **Send**: Send the card via email to the recipient
+4. **Customize**: Add recipient information, choose an optional `Send On` date, and generate an AI message
+5. **Send**: Send the card immediately, or schedule it so the cron job sends it later
 
 ## Testing
 
@@ -250,7 +267,8 @@ npm start
 
 - Never commit API keys or secrets to version control
 - Keep `FIREBASE_ADMIN_*` values server-only; they are required for public card lookup and secure card writes
-ted clients cannot write to `cards`
+- The browser no longer writes directly to Firestore for public cards; it submits to a validated server route instead
+- Lock down Firestore rules so unauthenticated clients cannot write to `cards`
 - Rotate all API keys if accidentally exposed
 - Use a verified sender/domain in Resend to reduce deliverability issues
 

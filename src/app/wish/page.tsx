@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from "uuid";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../db/firebase/config";
 import { saveCardData } from "@/lib/utils/cards";
+import Alert from "@mui/material/Alert";
+import Snackbar from "@mui/material/Snackbar";
 
 interface AIApiResponse {
   message: string;
@@ -51,11 +53,20 @@ const fetchAIQuotaStatus = async (): Promise<Partial<AIApiResponse>> => {
   return data as Partial<AIApiResponse>;
 };
 
+function isFutureDate(value: string): boolean {
+  if (!value) {
+    return false;
+  }
+
+  const selectedDate = new Date(`${value}T23:59:59.999`);
+  return selectedDate.getTime() > Date.now();
+}
+
 const FriendMessageContent: React.FC = () => {
   const [isAiMode, setIsAiMode] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [birthday, setBirthday] = useState("");
+  const [sendOn, setSendOn] = useState("");
   const [manualMessage, setManualMessage] = useState("");
   const [aiDescription, setAiDescription] = useState("");
   const [isAiAvailable, setIsAiAvailable] = useState(true);
@@ -63,6 +74,7 @@ const FriendMessageContent: React.FC = () => {
   const [emailStatus, setEmailStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [currentUserEmail, setCurrentUserEmail] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
   const cardType = searchParams.get("cardtype");
@@ -72,8 +84,10 @@ const FriendMessageContent: React.FC = () => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserId(user.uid);
+        setCurrentUserEmail(user.email ?? "");
       } else {
         setUserId(null);
+        setCurrentUserEmail("");
         router.push("/login");
       }
     });
@@ -108,20 +122,38 @@ const FriendMessageContent: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!sendOn) {
+      setError("Please choose a delivery date.");
+      return;
+    }
+
     // Validation: Manual mode requires all fields including message
-    if (!isAiMode && (!name || !email || !birthday || !manualMessage)) {
+    if (!isAiMode && (!name || !email || !manualMessage)) {
       setError("Please fill in all the fields.");
       return;
     }
 
     // Validation: AI mode only requires basic info (message will be generated)
-    if (isAiMode && (!name || !email || !birthday)) {
-      setError("Please fill in name, email, and birthday.");
+    if (isAiMode && (!name || !email)) {
+      setError("Please fill in name and email.");
       return;
     }
 
     if (isAiMode && !isAiAvailable) {
       setError("AI mode is currently unavailable.");
+      return;
+    }
+
+    if (sendOn && !/^\d{4}-\d{2}-\d{2}$/.test(sendOn)) {
+      setError("Please choose a valid send date.");
+      return;
+    }
+
+    const recipientEmail = email.trim().toLowerCase();
+    const userEmail = currentUserEmail.trim().toLowerCase();
+
+    if (recipientEmail && userEmail && recipientEmail === userEmail) {
+      setError("You cannot send a card to your own account email.");
       return;
     }
 
@@ -174,7 +206,7 @@ const FriendMessageContent: React.FC = () => {
     const formData = {
       name,
       email,
-      birthday,
+      sendAt: sendOn || undefined,
       cardType,
       message: finalMessage,
       mode: isAiMode ? "AI" : "MANUAL",
@@ -220,7 +252,9 @@ const FriendMessageContent: React.FC = () => {
       saveCardData(fallbackCard);
     }
 
-    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const shouldSendLater = isFutureDate(sendOn);
+
+    if (!shouldSendLater && email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       try {
         const response = await fetch("/api/send", {
           method: "POST",
@@ -231,7 +265,7 @@ const FriendMessageContent: React.FC = () => {
           body: JSON.stringify({
             firstName: name,
             link: generatedUrl,
-            recipientEmail: email,
+            recipientEmail: recipientEmail,
           }),
         });
 
@@ -247,10 +281,28 @@ const FriendMessageContent: React.FC = () => {
         setEmailStatus("Email failed: Could not reach the email service.");
         console.warn("Error sending email:", error);
       }
+    } else if (shouldSendLater) {
+      setEmailStatus(`Card scheduled for ${sendOn}. It will be sent automatically on that date.`);
     }
 
     setIsLoading(false);
     router.push(generatedUrl);
+  };
+
+  const handleCloseError = (_event: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setError("");
+  };
+
+  const handleCloseEmailStatus = (_event: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setEmailStatus("");
   };
   
 
@@ -274,16 +326,6 @@ const FriendMessageContent: React.FC = () => {
             <h2 className="text-xl font-semibold text-black dark:text-black mb-4 text-content">
               Send a Birthday Message
             </h2>
-            {error && <div className="text-red-500 mb-4 text-sm">{error}</div>}
-            {emailStatus && (
-              <div
-                className={`mb-4 text-sm ${
-                  emailStatus.startsWith("Email failed") ? "text-red-500" : "text-green-700"
-                }`}
-              >
-                {emailStatus}
-              </div>
-            )}
             <div className="mb-4">
               <label htmlFor="name" className="block text-black dark:text-black mb-1 text-content">
                 Friend's Name
@@ -311,14 +353,15 @@ const FriendMessageContent: React.FC = () => {
               />
             </div>
             <div className="mb-4">
-              <label htmlFor="birthday" className="block text-black dark:text-black mb-1 text-content">
-                Friend's Birthday
+              <label htmlFor="sendOn" className="block text-black dark:text-black mb-1 text-content">
+                Schedule Delivery
               </label>
               <input
                 type="date"
-                id="birthday"
-                value={birthday}
-                onChange={(e) => setBirthday(e.target.value)}
+                id="sendOn"
+                value={sendOn}
+                onChange={(e) => setSendOn(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
                 className="w-full px-3 py-2 border border-black rounded bg-white text-black focus:outline-none text-content"
                 required
               />
@@ -413,6 +456,33 @@ const FriendMessageContent: React.FC = () => {
               </button>
             </div>
           </form>
+
+          <Snackbar
+            open={Boolean(error)}
+            autoHideDuration={6000}
+            onClose={handleCloseError}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          >
+            <Alert onClose={handleCloseError} severity="error" variant="filled" sx={{ width: "100%" }}>
+              {error}
+            </Alert>
+          </Snackbar>
+
+          <Snackbar
+            open={Boolean(emailStatus)}
+            autoHideDuration={4000}
+            onClose={handleCloseEmailStatus}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          >
+            <Alert
+              onClose={handleCloseEmailStatus}
+              severity={emailStatus.startsWith("Email failed") ? "error" : "success"}
+              variant="filled"
+              sx={{ width: "100%" }}
+            >
+              {emailStatus}
+            </Alert>
+          </Snackbar>
         </div>
   );
 };
