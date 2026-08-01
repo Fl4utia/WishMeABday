@@ -44,6 +44,21 @@ export function parseScheduledDelivery(value: string): Date | null {
 }
 
 export function normalizeScheduledDelivery(value: string): string {
+  // If the user provided a date-only string that represents today, treat it as "send now".
+  // This matches the UI text: "Today sends immediately. Future dates send at 00:01 on that day.".
+  const trimmed = value.trim();
+  if (DATE_ONLY_PATTERN.test(trimmed)) {
+    const [year, month, day] = trimmed.split("-").map(Number);
+    const today = new Date();
+    if (
+      year === today.getFullYear() &&
+      month === today.getMonth() + 1 &&
+      day === today.getDate()
+    ) {
+      return new Date().toISOString();
+    }
+  }
+
   const parsed = parseScheduledDelivery(value);
 
   if (!parsed) {
