@@ -20,13 +20,24 @@ export async function POST(request: Request) {
     const userId = request.headers.get("x-user-id");
     const persistedCardData = userId ? { ...cardData, ownerUserId: userId } : cardData;
 
-    await firestore.collection("cards").doc(cardData.id).set(persistedCardData);
+    // Remove any undefined properties before writing to Firestore so the write doesn't fail.
+    const cleaned: Record<string, unknown> = Object.fromEntries(
+      Object.entries(persistedCardData).filter(([_, v]) => v !== undefined)
+    );
+
+    await firestore.collection("cards").doc(cardData.id).set(cleaned);
 
     if (userId) {
-      await firestore.collection("users").doc(userId).collection("friends").doc(cardData.id).set(persistedCardData);
+      // For the user's friend subcollection, we also write the cleaned object (merge to avoid replacing)
+      await firestore
+        .collection("users")
+        .doc(userId)
+        .collection("friends")
+        .doc(cardData.id)
+        .set(cleaned, { merge: true });
     }
 
-    return NextResponse.json(persistedCardData, { status: 201 });
+    return NextResponse.json(cleaned, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to save card";
     const status = message.startsWith("Invalid") || message.startsWith("Missing") ? 400 : 500;

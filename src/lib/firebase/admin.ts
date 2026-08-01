@@ -39,5 +39,17 @@ export function getAdminFirestore() {
     return null;
   }
 
-  return getFirestore(app);
+  const firestore = getFirestore(app);
+  try {
+    // Allow writes that omit optional fields (don't error on undefined properties)
+    // This prevents Firestore from rejecting documents when some optional fields are absent.
+    // The method `settings` is safe to call; if the runtime doesn't support it this will be a no-op.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (firestore as any).settings?.({ ignoreUndefinedProperties: true });
+  } catch (err) {
+    // If settings call fails for any reason, proceed without throwing — the API will still work.
+    console.warn("Unable to set Firestore settings ignoreUndefinedProperties:", err);
+  }
+
+  return firestore;
 }
