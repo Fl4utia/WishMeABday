@@ -268,11 +268,13 @@ const FriendMessageContent: React.FC = () => {
 
     let savedToServer = false;
     try {
+      // Read the current authenticated user ID directly to avoid timing issues with state
+      const currentUid = auth.currentUser?.uid ?? userId;
       const response = await fetch("/api/cards", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(userId ? { "x-user-id": userId } : {}),
+          ...(currentUid ? { "x-user-id": currentUid } : {}),
         },
         body: JSON.stringify(formData),
       });
