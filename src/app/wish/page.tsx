@@ -6,6 +6,11 @@ import { v4 as uuidv4 } from "uuid";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../db/firebase/config";
 import { saveCardData } from "@/lib/utils/cards";
+import {
+  getLocalDateInputValue,
+  normalizeScheduledDelivery,
+  parseScheduledDelivery,
+} from "@/lib/utils/scheduling";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 
@@ -58,8 +63,8 @@ function isFutureDate(value: string): boolean {
     return false;
   }
 
-  const selectedDate = new Date(`${value}T23:59:59.999`);
-  return selectedDate.getTime() > Date.now();
+  const scheduledDate = parseScheduledDelivery(value);
+  return Boolean(scheduledDate && scheduledDate.getTime() > Date.now());
 }
 
 const FriendMessageContent: React.FC = () => {
@@ -206,7 +211,7 @@ const FriendMessageContent: React.FC = () => {
     const formData = {
       name,
       email,
-      sendAt: sendOn || undefined,
+      sendAt: normalizeScheduledDelivery(sendOn),
       cardType,
       message: finalMessage,
       mode: isAiMode ? "AI" : "MANUAL",
@@ -282,7 +287,7 @@ const FriendMessageContent: React.FC = () => {
         console.warn("Error sending email:", error);
       }
     } else if (shouldSendLater) {
-      setEmailStatus(`Card scheduled for ${sendOn}. It will be sent automatically on that date.`);
+      setEmailStatus(`Card scheduled for ${sendOn}. It will be sent automatically at 00:01 on that day.`);
     }
 
     setIsLoading(false);
@@ -354,17 +359,20 @@ const FriendMessageContent: React.FC = () => {
             </div>
             <div className="mb-4">
               <label htmlFor="sendOn" className="block text-black dark:text-black mb-1 text-content">
-                Schedule Delivery
+                Delivery Date
               </label>
               <input
                 type="date"
                 id="sendOn"
                 value={sendOn}
                 onChange={(e) => setSendOn(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
+                min={getLocalDateInputValue()}
                 className="w-full px-3 py-2 border border-black rounded bg-white text-black focus:outline-none text-content"
                 required
               />
+              <p className="mt-2 text-sm text-gray-600">
+                Today sends immediately. Future dates send at 00:01 on that day.
+              </p>
             </div>
             <div className="mb-6 flex items-center justify-between">
               <span className="text-black dark:text-black text-content">

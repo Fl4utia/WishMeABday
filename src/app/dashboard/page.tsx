@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "../db/firebase/config";
 import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
 import { deleteStoredCard, getAllStoredCards } from "@/lib/utils/cards";
+import { formatScheduledDelivery, isScheduledDeliveryDue } from "@/lib/utils/scheduling";
 
 interface FriendData {
   id: string;
@@ -18,19 +19,6 @@ interface FriendData {
 
 function canCancelSending(friend: FriendData): boolean {
   return !friend.emailSentAt;
-}
-
-function formatDeliveryDate(sendAt?: string): string {
-  if (!sendAt) {
-    return "Not scheduled";
-  }
-
-  const value = new Date(sendAt);
-  if (Number.isNaN(value.getTime())) {
-    return sendAt;
-  }
-
-  return value.toLocaleDateString();
 }
 
 export default function Dashboard() {
@@ -158,7 +146,7 @@ export default function Dashboard() {
                   {friend.email}
                 </td>
                 <td className="px-4 py-2 text-sm">
-                  {formatDeliveryDate(friend.sendAt)}
+                  {formatScheduledDelivery(friend.sendAt)}
                 </td>
                 <td className="px-4 py-2 max-w-lg truncate-2-lines items-center">
                   {friend.message}

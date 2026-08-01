@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { getAdminFirestore } from "@/lib/firebase/admin";
 import { buildEmailTemplate } from "@/lib/server/emailTemplate";
 import { APP_CONFIG } from "@/lib/constants/app";
+import { isScheduledDeliveryDue } from "@/lib/utils/scheduling";
 
 const resendApiKey = process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY;
 const fromEmail = process.env.RESEND_FROM_EMAIL || APP_CONFIG.DEFAULT_EMAIL_FROM;
@@ -27,20 +28,27 @@ export async function GET(request: Request) {
   }
 
   const nowIso = new Date().toISOString();
-  const dueCards = await firestore
-    .collection("cards")
-    .where("sendAt", "<=", nowIso)
-    .get();
+  const cardsSnapshot = await firestore.collection("cards").get();
+  const dueCards = cardsSnapshot.docs.filter((cardDoc) => {
+    const card = cardDoc.data() as { sendAt?: string; emailSentAt?: string };
+    return (
+      typeof card.sendAt === "string" &&
+      card.sendAt.length > 0 &&
+      !card.emailSentAt &&
+      isScheduledDeliveryDue(card.sendAt, new Date(nowIso))
+    );
+  });
 
   const processed: Array<{ id: string; status: string }> = [];
 
-  for (const cardDoc of dueCards.docs) {
+  for (const cardDoc of dueCards) {
     const card = cardDoc.data() as {
       name?: string;
       email?: string;
       link?: string;
       sendAt?: string;
       emailSentAt?: string;
+      ownerUserId?: string;
     };
 
     if (card.emailSentAt || !card.email || !card.link || !card.name) {
@@ -70,6 +78,28 @@ export async function GET(request: Request) {
         emailSendError: null,
         emailSendAttemptedAt: nowIso,
       });
+
+      if (card.ownerUserId) {
+        try {
+          await firestore
+            .collection("users")
+            .doc(card.ownerUserId)
+            .collection("friends")
+            .doc(cardDoc.id)
+            .set(
+              {
+                emailSentAt: nowIso,
+                emailSendId: result.data?.id ?? null,
+                emailSendError: null,
+                emailSendAttemptedAt: nowIso,
+              },
+              { merge: true }
+            );
+        } catch (userUpdateError) {
+          console.warn("Unable to update user card status:", userUpdateError);
+        }
+      }
+
       processed.push({ id: cardDoc.id, status: "sent" });
     } catch (error) {
       await cardDoc.ref.update({
