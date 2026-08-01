@@ -218,6 +218,7 @@ const FriendMessageContent: React.FC = () => {
       id: uuid,
     };
 
+    let savedToServer = false;
     try {
       const response = await fetch("/api/cards", {
         method: "POST",
@@ -245,7 +246,10 @@ const FriendMessageContent: React.FC = () => {
       });
 
       generatedUrl = savedCard.link;
+      savedToServer = true;
     } catch (error) {
+      // If the server save fails, keep a local fallback for the sender, but DO NOT send the email
+      // because the recipient won't be able to view a card that isn't persisted server-side.
       console.warn("Server card write unavailable, using local fallback instead:", error);
 
       const fallbackCard = {
@@ -255,36 +259,42 @@ const FriendMessageContent: React.FC = () => {
       };
 
       saveCardData(fallbackCard);
+      savedToServer = false;
     }
 
     const shouldSendLater = isFutureDate(sendOn);
 
+    // Only attempt immediate email delivery if the card was successfully saved to the server.
     if (!shouldSendLater && email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      try {
-        const response = await fetch("/api/send", {
-          method: "POST",
-          keepalive: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            firstName: name,
-            link: generatedUrl,
-            recipientEmail: recipientEmail,
-          }),
-        });
+      if (!savedToServer) {
+        setEmailStatus("Email not sent: card was saved locally because the server was unavailable.");
+      } else {
+        try {
+          const response = await fetch("/api/send", {
+            method: "POST",
+            keepalive: true,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              firstName: name,
+              link: generatedUrl,
+              recipientEmail: recipientEmail,
+            }),
+          });
 
-        if (!response.ok) {
-          const errorBody = await response.json().catch(() => null);
-          const errorMessage = errorBody?.details || errorBody?.error || "Email delivery failed.";
-          setEmailStatus(`Email failed: ${errorMessage}`);
-          console.warn("Email delivery failed:", errorBody);
-        } else {
-          setEmailStatus("Email sent successfully.");
+          if (!response.ok) {
+            const errorBody = await response.json().catch(() => null);
+            const errorMessage = errorBody?.details || errorBody?.error || "Email delivery failed.";
+            setEmailStatus(`Email failed: ${errorMessage}`);
+            console.warn("Email delivery failed:", errorBody);
+          } else {
+            setEmailStatus("Email sent successfully.");
+          }
+        } catch (error) {
+          setEmailStatus("Email failed: Could not reach the email service.");
+          console.warn("Error sending email:", error);
         }
-      } catch (error) {
-        setEmailStatus("Email failed: Could not reach the email service.");
-        console.warn("Error sending email:", error);
       }
     } else if (shouldSendLater) {
       setEmailStatus(`Card scheduled for ${sendOn}. It will be sent automatically at 00:01 on that day.`);
