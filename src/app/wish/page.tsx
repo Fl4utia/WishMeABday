@@ -335,7 +335,7 @@ const FriendMessageContent: React.FC = () => {
         createdAt: new Date().toISOString(),
         pending: true,
         // If the send date is in the future we don't need to send immediately; otherwise mark emailPending
-        emailPending: !shouldSendLater && email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+        emailPending: Boolean(!shouldSendLater && email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)),
       };
 
       saveCardData(fallbackCard);
