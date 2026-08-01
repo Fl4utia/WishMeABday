@@ -9,9 +9,6 @@ export interface StoredCardData {
   createdAt: string;
   mode?: string;
   sendAt?: string;
-  // Client-only flags to manage local fallback/sync behavior
-  pending?: boolean; // true when item was only saved locally and needs server sync
-  emailPending?: boolean; // true when an immediate email should be sent after server sync
   [key: string]: unknown;
 }
 
@@ -68,28 +65,3 @@ export function deleteStoredCard(id: string): void {
   saveStoredCards(cards);
 }
 
-// New helpers for syncing pending local cards to the server
-export function getPendingStoredCards(): StoredCardData[] {
-  return getStoredCards().filter((card) => card.pending === true);
-}
-
-export function markStoredCardAsSynced(id: string, serverData?: Partial<StoredCardData>): void {
-  const cards = getStoredCards();
-  const next = cards.map((card) => {
-    if (card.id !== id) return card;
-    const updated = { ...card, ...(serverData ?? {}) };
-    delete (updated as Partial<StoredCardData>).pending;
-    delete (updated as Partial<StoredCardData>).emailPending;
-    return updated;
-  });
-  saveStoredCards(next);
-}
-
-export function markStoredCardEmailSent(id: string): void {
-  const cards = getStoredCards();
-  const next = cards.map((card) => {
-    if (card.id !== id) return card;
-    return { ...card, emailPending: false };
-  });
-  saveStoredCards(next);
-}
