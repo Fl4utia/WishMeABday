@@ -17,15 +17,16 @@ export async function POST(request: Request) {
     const payload = validateCardInput(await request.json());
     const origin = new URL(request.url).origin;
     const cardData = buildCardData(payload, origin);
-
-    await firestore.collection("cards").doc(cardData.id).set(cardData);
-
     const userId = request.headers.get("x-user-id");
+    const persistedCardData = userId ? { ...cardData, ownerUserId: userId } : cardData;
+
+    await firestore.collection("cards").doc(cardData.id).set(persistedCardData);
+
     if (userId) {
-      await firestore.collection("users").doc(userId).collection("friends").doc(cardData.id).set(cardData);
+      await firestore.collection("users").doc(userId).collection("friends").doc(cardData.id).set(persistedCardData);
     }
 
-    return NextResponse.json(cardData, { status: 201 });
+    return NextResponse.json(persistedCardData, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to save card";
     const status = message.startsWith("Invalid") || message.startsWith("Missing") ? 400 : 500;

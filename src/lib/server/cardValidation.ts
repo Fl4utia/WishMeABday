@@ -1,3 +1,5 @@
+import { normalizeScheduledDelivery } from "@/lib/utils/scheduling";
+
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -53,7 +55,7 @@ export function validateCardInput(input: unknown): CreateCardInput {
   const birthday = typeof candidate.birthday === "string" && candidate.birthday.trim().length > 0
     ? cleanText(candidate.birthday)
     : undefined;
-  const sendAt = cleanText(candidate.sendAt as string);
+  const sendAt = normalizeScheduledDelivery(cleanText(candidate.sendAt as string));
 
   if (!UUID_REGEX.test(id)) {
     throw new Error("Invalid card id");
@@ -79,16 +81,8 @@ export function validateCardInput(input: unknown): CreateCardInput {
     throw new Error("Invalid mode");
   }
 
-  if (sendAt) {
-    const sendDate = new Date(sendAt);
-    if (Number.isNaN(sendDate.getTime())) {
-      throw new Error("Invalid send date");
-    }
-
-    const now = new Date();
-    if (sendDate.getTime() < now.getTime() - 60000) {
-      throw new Error("Send date must be in the future");
-    }
+  if (new Date(sendAt).getTime() < Date.now() - 60000) {
+    throw new Error("Send date must be in the future");
   }
 
   return {

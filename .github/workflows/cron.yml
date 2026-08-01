@@ -1,0 +1,14 @@
+name: Send scheduled cards
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  trigger-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call scheduled delivery endpoint
+        run: |
+          curl -fsS "${{ secrets.CRON_URL }}?secret=${{ secrets.CRON_SECRET }}"
