@@ -13,6 +13,11 @@ GROQ_API_KEY="your_groq_api_key_here"
 # Optional Groq model override (default: llama-3.1-8b-instant)
 GROQ_MODEL="llama-3.1-8b-instant"
 
+# Firebase Admin credentials used by the public card lookup API
+FIREBASE_ADMIN_PROJECT_ID="your_firebase_project_id"
+FIREBASE_ADMIN_CLIENT_EMAIL="firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com"
+FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
 # Free daily AI usage limit for /api/openai requests (global app quota)
 AI_DAILY_QUOTA="25"
 

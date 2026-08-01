@@ -36,16 +36,31 @@ export async function POST(req: Request) {
     }
 
     const { firstName, link, recipientEmail } = body;
+    const sanitizedFirstName = sanitizeText(firstName);
 
     // Validate required fields
-    if (!firstName || typeof firstName !== "string" || firstName.trim().length === 0) {
+    if (!firstName || typeof firstName !== "string" || sanitizedFirstName.length === 0) {
       return NextResponse.json<ApiError>(
         { error: "First name is required" },
         { status: 400 }
       );
     }
 
+    if (sanitizedFirstName.length > 80) {
+      return NextResponse.json<ApiError>(
+        { error: "First name is too long" },
+        { status: 400 }
+      );
+    }
+
     if (!link || typeof link !== "string" || !isValidUrl(link)) {
+      return NextResponse.json<ApiError>(
+        { error: "Valid card link is required" },
+        { status: 400 }
+      );
+    }
+
+    if (link.length > 2048) {
       return NextResponse.json<ApiError>(
         { error: "Valid card link is required" },
         { status: 400 }
@@ -63,13 +78,13 @@ export async function POST(req: Request) {
     }
 
     // Build email HTML content
-    const htmlContent = buildEmailTemplate(firstName, link);
+    const htmlContent = buildEmailTemplate(sanitizedFirstName, link);
 
     // Send email
     const result = await resend.emails.send({
       from: fromEmail,
       to: [toEmail],
-      subject: `We heard it's your birthday, ${firstName}!`,
+      subject: `We heard it's your birthday, ${sanitizedFirstName}!`,
       html: htmlContent,
     });
 
@@ -176,6 +191,10 @@ function buildEmailTemplate(firstName: string, link: string): string {
     </body>
     </html>
   `;
+}
+
+function sanitizeText(value: string): string {
+  return value.replace(/[\u0000-\u001f\u007f<>]/g, "").trim();
 }
 
 /**

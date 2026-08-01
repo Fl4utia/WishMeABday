@@ -16,7 +16,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://reactjs.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-11.0-orange?style=for-the-badge&logo=firebase)](https://firebase.google.com/)
-[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--3.5-green?style=for-the-badge&logo=openai)](https://openai.com/)
+[![Groq](https://img.shields.io/badge/Groq-OpenAI%20Compat-green?style=for-the-badge&logo=openai)](https://groq.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-Private-red?style=for-the-badge)](LICENSE)
 
@@ -32,7 +32,7 @@
 
 This application allows users to:
 - Choose from multiple birthday card designs
-- Generate personalized birthday messages using AI (OpenAI GPT)
+- Generate personalized birthday messages using Groq-hosted AI models
 - Send birthday cards via email
 - Authenticate securely using Google Sign-In (Firebase Auth)
 - Enjoy interactive animations and confetti effects
@@ -45,7 +45,7 @@ This application allows users to:
 
 ## Features
 
-- **AI-Powered Messages**: Generate unique, personalized birthday wishes using OpenAI's GPT model
+- **AI-Powered Messages**: Generate unique, personalized birthday wishes using Groq-hosted models with a shared daily quota
 - **Multiple Card Designs**: Three distinct card templates with different visual styles
 - **Google Authentication**: Secure login with Firebase Authentication
 - **Email Integration**: Send cards directly via Resend API
@@ -69,7 +69,7 @@ This application allows users to:
 | **Frontend** | ![Next.js](https://img.shields.io/badge/Next.js-15.0.0-black?logo=next.js&logoColor=white) ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript&logoColor=white) |
 | **Styling** | ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwind-css&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS-3-1572B6?logo=css3&logoColor=white) |
 | **Backend** | ![Firebase](https://img.shields.io/badge/Firebase-11.0-orange?logo=firebase&logoColor=white) ![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white) |
-| **AI** | ![OpenAI](https://img.shields.io/badge/OpenAI-GPT--3.5-green?logo=openai&logoColor=white) |
+| **AI** | ![Groq](https://img.shields.io/badge/Groq-OpenAI%20Compat-green?logo=openai&logoColor=white) |
 | **Email** | ![Resend](https://img.shields.io/badge/Resend-API-000000) |
 | **Testing** | ![Jest](https://img.shields.io/badge/Jest-29.7-C21325?logo=jest&logoColor=white) ![Testing Library](https://img.shields.io/badge/Testing_Library-React-E33332?logo=testing-library&logoColor=white) |
 | **Tools** | ![npm](https://img.shields.io/badge/npm-10+-CB3837?logo=npm&logoColor=white) ![Git](https://img.shields.io/badge/Git-2.0-F05032?logo=git&logoColor=white) |
@@ -85,7 +85,7 @@ This application allows users to:
 - Node.js 18+ installed
 - npm or yarn package manager
 - A Google account (for Firebase project creation)
-- OpenAI API key ([Get one here](https://platform.openai.com/api-keys))
+- Groq API key ([Get one here](https://console.groq.com/keys))
 - Resend API key ([Sign up here](https://resend.com/))
 
 ### Setup Steps
@@ -152,8 +152,10 @@ This application allows users to:
 Create a `.env.local` file with the following variables:
 
 ```bash
-# OpenAI Configuration
-NEXT_PUBLIC_OPENAI_KEY=your_openai_api_key_here
+# Groq AI Configuration
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=llama-3.1-8b-instant
+AI_DAILY_QUOTA=25
 
 # Firebase Configuration
 NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
@@ -184,7 +186,7 @@ semana_tec/
 ├── src/
 │   └── app/
 │       ├── api/              # API routes
-│       │   ├── openai/       # OpenAI integration
+│       │   ├── openai/       # AI message generation API
 │       │   └── send/         # Email sending
 │       ├── birthday1/        # Card template 1
 │       ├── birthday2/        # Card template 2
@@ -251,9 +253,11 @@ npm start
 ## Security Notes
 
 - Never commit API keys or secrets to version control
+- Keep `FIREBASE_ADMIN_*` values server-only; they are required for public card lookup and secure card writes
+- The browser no longer writes directly to Firestore for public cards; it submits to a validated server route instead
+- Lock down Firestore rules so unauthenticated clients cannot write to `cards`
 - Rotate all API keys if accidentally exposed
-- Review Firebase security rules regularly
-- Use environment variables for all sensitive configuration
+- Use a verified sender/domain in Resend to reduce deliverability issues
 
 ---
 

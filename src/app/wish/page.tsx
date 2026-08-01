@@ -4,8 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../db/firebase/config";
-import { doc, setDoc } from "firebase/firestore";
+import { auth } from "../db/firebase/config";
 import { saveCardData } from "@/lib/utils/cards";
 
 interface AIApiResponse {
@@ -179,24 +178,46 @@ const FriendMessageContent: React.FC = () => {
       cardType,
       message: finalMessage,
       mode: isAiMode ? "AI" : "MANUAL",
-      link: generatedUrl,
-      createdAt: new Date().toISOString(),
       id: uuid,
     };
 
-    saveCardData(formData);
-
-    // Save to Firebase when possible, but fall back gracefully if Firestore rules block the write.
     try {
-      if (userId) {
-        const friendDocRef = doc(db, `users/${userId}/friends`, uuid);
-        await setDoc(friendDocRef, formData);
+      const response = await fetch("/api/cards", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(userId ? { "x-user-id": userId } : {}),
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.details || errorBody?.error || "Failed to save card");
       }
 
-      const cardDocRef = doc(db, `cards`, uuid);
-      await setDoc(cardDocRef, formData);
+      const savedCard = (await response.json()) as {
+        link: string;
+        createdAt: string;
+      };
+
+      saveCardData({
+        ...formData,
+        link: savedCard.link,
+        createdAt: savedCard.createdAt,
+      });
+
+      generatedUrl = savedCard.link;
     } catch (error) {
-      console.warn("Firestore write unavailable, using local fallback instead:", error);
+      console.warn("Server card write unavailable, using local fallback instead:", error);
+
+      const fallbackCard = {
+        ...formData,
+        link: generatedUrl,
+        createdAt: new Date().toISOString(),
+      };
+
+      saveCardData(fallbackCard);
     }
 
     if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
