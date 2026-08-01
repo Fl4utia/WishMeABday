@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../db/firebase/config";
-import { saveCardData } from "@/lib/utils/cards";
+import { saveCardData, getPendingStoredCards, markStoredCardAsSynced, markStoredCardEmailSent } from "@/lib/utils/cards";
 import {
   getLocalDateInputValue,
   normalizeScheduledDelivery,
@@ -114,6 +114,81 @@ const FriendMessageContent: React.FC = () => {
     loadQuota();
   }, []);
 
+  // Attempt to sync any locally saved pending cards to the server on mount and when the browser goes online
+  useEffect(() => {
+    const trySyncPending = async () => {
+      try {
+        const pending = getPendingStoredCards();
+        if (!pending || pending.length === 0) return;
+
+        for (const card of pending) {
+          try {
+            const payload = {
+              id: card.id,
+              name: card.name,
+              email: card.email,
+              birthday: typeof card.birthday === "string" ? card.birthday : undefined,
+              cardType: (card.cardType as string) ?? "3",
+              message: card.message,
+              mode: (card.mode as string) ?? "MANUAL",
+              sendAt: (card.sendAt as string) ?? new Date().toISOString(),
+            };
+
+            const resp = await fetch("/api/cards", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+            if (!resp.ok) {
+              console.warn("Failed to sync pending card to server:", card.id, await resp.text());
+              continue;
+            }
+
+            const saved = await resp.json();
+            // Mark local card as synced and update link/createdAt if provided by server
+            markStoredCardAsSynced(card.id, {
+              link: (saved as any).link ?? card.link,
+              createdAt: (saved as any).createdAt ?? card.createdAt,
+            });
+
+            // If an immediate email send was pending and the card is not scheduled for future, attempt to send now
+            const isFuture = typeof card.sendAt === "string" && new Date(card.sendAt).getTime() > Date.now();
+            if (card.emailPending && !isFuture && card.email) {
+              try {
+                await fetch("/api/send", {
+                  method: "POST",
+                  keepalive: true,
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    firstName: card.name,
+                    link: (saved as any).link ?? card.link,
+                    recipientEmail: card.email,
+                  }),
+                });
+
+                markStoredCardEmailSent(card.id);
+              } catch (sendErr) {
+                console.warn("Failed to send pending email for card:", card.id, sendErr);
+              }
+            }
+          } catch (innerErr) {
+            console.warn("Error syncing pending card:", card.id, innerErr);
+          }
+        }
+      } catch (err) {
+        console.warn("Error while attempting to sync pending cards:", err);
+      }
+    };
+
+    // Run on mount
+    trySyncPending();
+
+    // Also attempt when browser regains network connectivity
+    window.addEventListener("online", trySyncPending);
+    return () => window.removeEventListener("online", trySyncPending);
+  }, []);
+
   const handleToggle = () => {
     if (!isAiMode && !isAiAvailable) {
       setError("AI mode is currently unavailable.");
@@ -218,6 +293,8 @@ const FriendMessageContent: React.FC = () => {
       id: uuid,
     };
 
+    const shouldSendLater = isFutureDate(sendOn);
+
     let savedToServer = false;
     try {
       const response = await fetch("/api/cards", {
@@ -256,13 +333,14 @@ const FriendMessageContent: React.FC = () => {
         ...formData,
         link: generatedUrl,
         createdAt: new Date().toISOString(),
+        pending: true,
+        // If the send date is in the future we don't need to send immediately; otherwise mark emailPending
+        emailPending: !shouldSendLater && email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
       };
 
       saveCardData(fallbackCard);
       savedToServer = false;
     }
-
-    const shouldSendLater = isFutureDate(sendOn);
 
     // Only attempt immediate email delivery if the card was successfully saved to the server.
     if (!shouldSendLater && email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
