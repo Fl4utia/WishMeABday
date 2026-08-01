@@ -3,8 +3,11 @@ import { NextResponse } from "next/server";
 import { APP_CONFIG } from "@/lib/constants/app";
 import type { SendEmailRequest, SendEmailResponse, ApiError } from "@/lib/types";
 
+const resendApiKey = process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY;
+const fromEmail = process.env.RESEND_FROM_EMAIL || APP_CONFIG.DEFAULT_EMAIL_FROM;
+
 // Initialize Resend client
-const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
+const resend = new Resend(resendApiKey);
 
 /**
  * POST /api/send
@@ -13,7 +16,7 @@ const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY);
 export async function POST(req: Request) {
   try {
     // Validate API key
-    if (!process.env.NEXT_PUBLIC_RESEND_API_KEY) {
+    if (!resendApiKey) {
       console.error("Resend API key is not configured");
       return NextResponse.json<ApiError>(
         { error: "Email service is not configured" },
@@ -63,17 +66,27 @@ export async function POST(req: Request) {
     const htmlContent = buildEmailTemplate(firstName, link);
 
     // Send email
-    const data = await resend.emails.send({
-      from: APP_CONFIG.DEFAULT_EMAIL_FROM,
+    const result = await resend.emails.send({
+      from: fromEmail,
       to: [toEmail],
       subject: `We heard it's your birthday, ${firstName}!`,
       html: htmlContent,
     });
 
-    console.log("Email sent successfully:", data);
+    if (result.error) {
+      return NextResponse.json<ApiError>(
+        {
+          error: "Failed to send email",
+          details: result.error.message,
+        },
+        { status: 502 }
+      );
+    }
+
+    console.log("Email sent successfully:", result.data);
 
     return NextResponse.json<SendEmailResponse>(
-      { message: "Email sent successfully" },
+      { message: "Email sent successfully", id: result.data?.id },
       { status: 200 }
     );
   } catch (error) {

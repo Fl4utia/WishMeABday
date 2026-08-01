@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../../db/firebase/config";
 import { onAuthStateChanged } from "firebase/auth";
+import { getStoredCardData } from "@/lib/utils/cards";
 
 const BirthdayCard: React.FC = () => {
   const { id } = useParams();
@@ -32,11 +33,21 @@ const BirthdayCard: React.FC = () => {
           if (cardDoc.exists()) {
             setCardData(cardDoc.data() as { message: string });
           } else {
-            setError("Card not found.");
+            const storedCardData = getStoredCardData(id as string);
+            if (storedCardData) {
+              setCardData(storedCardData as { message: string });
+            } else {
+              setError("Card not found.");
+            }
           }
         } catch (error) {
-          console.error("Error fetching card data:", error);
-          setError("Failed to fetch card data.");
+          console.warn("Falling back to locally stored card data:", error);
+          const storedCardData = getStoredCardData(id as string);
+          if (storedCardData) {
+            setCardData(storedCardData as { message: string });
+          } else {
+            setError("Failed to fetch card data.");
+          }
         }
       };
       fetchCardData();

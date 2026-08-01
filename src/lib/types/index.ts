@@ -12,10 +12,15 @@ export interface BirthdayCardData {
 
 export interface OpenAIRequest {
   prompt: string;
+  provider?: "local" | "openai" | "claude";
+  apiKey?: string;
 }
 
 export interface OpenAIResponse {
   message: string;
+  remainingRequests?: number;
+  resetAt?: string;
+  aiAvailable?: boolean;
 }
 
 export interface SendEmailRequest {
@@ -26,6 +31,7 @@ export interface SendEmailRequest {
 
 export interface SendEmailResponse {
   message: string;
+  id?: string;
 }
 
 export interface ApiError {
