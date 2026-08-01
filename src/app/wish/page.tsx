@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../db/firebase/config";
-import { saveCardData } from "@/lib/utils/cards";
 import {
   getLocalDateInputValue,
   normalizeScheduledDelivery,
@@ -219,6 +218,52 @@ const FriendMessageContent: React.FC = () => {
       id: uuid,
     };
 
+    // Client-side validation to mirror server rules and fail fast with clear messages
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!UUID_REGEX.test(formData.id)) {
+      setError("Generated card id is invalid. Please try again.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!formData.name || formData.name.trim().length === 0) {
+      setError("Please provide the recipient's name.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (formData.name.length > 80) {
+      setError("Name is too long (max 80 characters).");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!EMAIL_REGEX.test(formData.email)) {
+      setError("Please provide a valid recipient email address.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!formData.cardType || !["1", "2", "3"].includes(String(formData.cardType))) {
+      setError("Please select a valid card type.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!formData.message || formData.message.trim().length === 0) {
+      setError("Please provide a birthday message or use AI mode to generate one.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (formData.message.length > 500) {
+      setError("Message is too long (max 500 characters).");
+      setIsLoading(false);
+      return;
+    }
+
     const shouldSendLater = isFutureDate(sendOn);
 
     let savedToServer = false;
@@ -242,12 +287,7 @@ const FriendMessageContent: React.FC = () => {
         createdAt: string;
       };
 
-      saveCardData({
-        ...formData,
-        link: savedCard.link,
-        createdAt: savedCard.createdAt,
-      });
-
+      // Do not persist cards in localStorage — rely on server persistence only.
       generatedUrl = savedCard.link;
       savedToServer = true;
     } catch (error) {
