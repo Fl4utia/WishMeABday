@@ -38,19 +38,15 @@ This application allows users to:
 - Enjoy interactive animations and confetti effects
 - Experience a responsive, mobile-friendly design
 
-## Documentation
-
-- **Project Definition**: [Google Doc](https://docs.google.com/document/d/12H-8ZWMMZJGwY_Au9-M_V7rOe9Ud7HGca6-igmBImv4/edit?usp=sharing)
-- **Database Schema**: [Lucidchart](https://lucid.app/lucidchart/9458501d-1211-47f4-9fec-d414eafa17ee/edit?viewport_loc=42%2C-43%2C907%2C752%2C0_0&invitationId=inv_38ae5084-d897-41cc-82ba-bd11cada5a3e)
 
 ## Features
 
-- **AI-Powered Messages**: Generate unique, personalized birthday wishes using Groq-hosted models with a shared daily quota
+- **AI-Powered Messages**: Generate unique, personalized birthday wishes using Groq
 - **Multiple Card Designs**: Three distinct card templates with different visual styles
 - **Google Authentication**: Secure login with Firebase Authentication
 - **Email Integration**: Send cards directly via Resend API
 - **Interactive UI**: Smooth transitions, confetti animations, and keyboard navigation
-- **Responsive Design**: Mobile-first approach with Tailwind CSS
+
 
 ## Tech Stack
 
@@ -149,7 +145,7 @@ This application allows users to:
 
 ## Environment Variables
 
-Create a `.env.local` file with the following variables:
+Create a `.env.local` file with the following variables or look at the env.example template:
 
 ```bash
 # Groq AI Configuration
@@ -254,10 +250,10 @@ npm start
 
 - Never commit API keys or secrets to version control
 - Keep `FIREBASE_ADMIN_*` values server-only; they are required for public card lookup and secure card writes
-- The browser no longer writes directly to Firestore for public cards; it submits to a validated server route instead
-- Lock down Firestore rules so unauthenticated clients cannot write to `cards`
+ted clients cannot write to `cards`
 - Rotate all API keys if accidentally exposed
 - Use a verified sender/domain in Resend to reduce deliverability issues
+
 
 ---
 
@@ -265,8 +261,18 @@ npm start
 
 This project is private and maintained by [Fl4utia](https://github.com/Fl4utia).
 
+
 ---
 
 ## Support
 
 For questions or issues, please [open an issue](https://github.com/Fl4utia/semana_tec/issues) on GitHub.
+
+---
+
+## To do:
+
+Add new test cases for editing functionality and check for possible vulnerabilities
+Fix the Dashboard card type bug
+Hide error/success messages after card creation (or auto-dismiss them)
+Fix mobile design for cards 
