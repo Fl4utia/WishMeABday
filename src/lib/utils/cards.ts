@@ -2,12 +2,13 @@ export interface StoredCardData {
   id: string;
   name: string;
   email: string;
-  birthday: string;
+  birthday?: string;
   cardType?: string | null;
   message: string;
   link: string;
   createdAt: string;
   mode?: string;
+  sendAt?: string;
   [key: string]: unknown;
 }
 

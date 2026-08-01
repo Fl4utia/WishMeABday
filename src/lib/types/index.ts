@@ -29,9 +29,28 @@ export interface SendEmailRequest {
   recipientEmail?: string;
 }
 
+export interface ScheduleCardRequest {
+  id: string;
+  name: string;
+  email: string;
+  birthday?: string;
+  cardType: string;
+  message: string;
+  mode: string;
+  sendAt: string;
+}
+
 export interface SendEmailResponse {
   message: string;
   id?: string;
+}
+
+export interface ScheduleCardResponse {
+  id: string;
+  link: string;
+  createdAt: string;
+  sendAt: string;
+  emailSentAt?: string;
 }
 
 export interface ApiError {

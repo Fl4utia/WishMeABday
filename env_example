@@ -21,6 +21,9 @@ FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE K
 # Free daily AI usage limit for /api/openai requests (global app quota)
 AI_DAILY_QUOTA="25"
 
+# Optional secret used by the scheduled email cron route
+CRON_SECRET="your_cron_secret_here"
+
 # ------------------------------------------
 # Firebase Configuration
 # ------------------------------------------

@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { NextResponse } from "next/server";
 import { APP_CONFIG } from "@/lib/constants/app";
+import { buildEmailTemplate } from "@/lib/server/emailTemplate";
 import type { SendEmailRequest, SendEmailResponse, ApiError } from "@/lib/types";
 
 const resendApiKey = process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY;
@@ -123,74 +124,6 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
-}
-
-/**
- * Builds the HTML template for the birthday email
- */
-function buildEmailTemplate(firstName: string, link: string): string {
-  return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Happy Birthday!</title>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          background-color: #f4f4f4;
-          margin: 0;
-          padding: 0;
-        }
-        .container {
-          max-width: 600px;
-          margin: 40px auto;
-          background-color: #ffffff;
-          padding: 30px;
-          border-radius: 10px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-          color: #ff6b6b;
-          text-align: center;
-          font-size: 32px;
-        }
-        p {
-          color: #333333;
-          font-size: 16px;
-          line-height: 1.6;
-          text-align: center;
-        }
-        .button {
-          display: inline-block;
-          margin: 20px auto;
-          padding: 15px 30px;
-          background-color: #ff6b6b;
-          color: #ffffff;
-          text-decoration: none;
-          border-radius: 5px;
-          font-weight: bold;
-          text-align: center;
-        }
-        .button-container {
-          text-align: center;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <h1>🎉 Happy Birthday, ${firstName}! 🎉</h1>
-        <p>We hope you have a fantastic day filled with joy, laughter, and wonderful memories!</p>
-        <p>Here's a special birthday card just for you:</p>
-        <div class="button-container">
-          <a href="${link}" class="button">View Your Birthday Card</a>
-        </div>
-        <p>Wishing you all the best on your special day!</p>
-      </div>
-    </body>
-    </html>
-  `;
 }
 
 function sanitizeText(value: string): string {
