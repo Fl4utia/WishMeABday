@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../db/firebase/config";
 import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
-import { deleteStoredCard, getAllStoredCards } from "@/lib/utils/cards";
 import { formatScheduledDelivery, isScheduledDeliveryDue } from "@/lib/utils/scheduling";
 
 interface FriendData {
@@ -59,22 +58,15 @@ export default function Dashboard() {
           setFriends(friendsData);
           return;
         } catch (error) {
-          console.warn("Firestore is unavailable, using local card fallback:", error);
+          console.warn("Failed to fetch user friends from Firestore:", error);
+          // If Firestore is unavailable, show an empty list and allow UI to remain functional.
+          setFriends([]);
+          return;
         }
       }
 
-      const storedFriends = getAllStoredCards().map((card) => ({
-        id: card.id,
-        name: card.name,
-        email: card.email,
-        sendAt: typeof card.sendAt === "string" ? card.sendAt : undefined,
-        emailSentAt: typeof card.emailSentAt === "string" ? card.emailSentAt : undefined,
-        message: card.message,
-        cardType: card.cardType ?? "",
-        link: card.link,
-      })) as FriendData[];
-
-      setFriends(storedFriends);
+      // If not authenticated or no Firestore data, ensure friends is empty.
+      setFriends([]);
     };
     fetchFriends();
   }, []);
@@ -95,7 +87,7 @@ export default function Dashboard() {
       }
     }
 
-    deleteStoredCard(friendId);
+    // Update UI regardless; local storage removed so only remove from state.
     setFriends(friends.filter((friend) => friend.id !== friendId));
   };
 
