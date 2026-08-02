@@ -1,9 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { auth, db } from "../db/firebase/config";
-import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
-import { formatScheduledDelivery, isScheduledDeliveryDue } from "@/lib/utils/scheduling";
+import { auth } from "../db/firebase/config";
+import { formatDeliveryStatus, isScheduledDeliveryDue } from "@/lib/utils/scheduling";
 
 interface FriendData {
   id: string;
@@ -17,7 +16,7 @@ interface FriendData {
 }
 
 function canCancelSending(friend: FriendData): boolean {
-  return !friend.emailSentAt;
+  return !friend.emailSentAt && (!friend.sendAt || !isScheduledDeliveryDue(friend.sendAt));
 }
 
 export default function Dashboard() {
@@ -92,18 +91,27 @@ export default function Dashboard() {
       return;
     }
 
-    const userId = auth.currentUser?.uid;
-    if (userId) {
-      try {
-        const friendDocRef = doc(db, `users/${userId}/friends`, friendId);
-        await deleteDoc(friendDocRef);
-      } catch (error) {
-        console.warn("Unable to delete Firestore entry, removing local copy instead:", error);
-      }
+    const currentUserId = userId ?? auth.currentUser?.uid;
+    if (!currentUserId) {
+      return;
     }
 
-    // Update UI regardless; local storage removed so only remove from state.
-    setFriends(friends.filter((friend) => friend.id !== friendId));
+    try {
+      const response = await fetch(`/api/users/me/friends/${friendId}`, {
+        method: "DELETE",
+        headers: {
+          "x-user-id": currentUserId,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to cancel card (${response.status})`);
+      }
+
+      setFriends((prevFriends) => prevFriends.filter((item) => item.id !== friendId));
+    } catch (error) {
+      console.warn("Unable to cancel card delivery:", error);
+    }
   };
 
   return (
@@ -153,7 +161,7 @@ export default function Dashboard() {
                   {friend.email}
                 </td>
                 <td className="px-4 py-2 text-sm">
-                  {formatScheduledDelivery(friend.sendAt)}
+                  {formatDeliveryStatus(friend.sendAt, friend.emailSentAt)}
                 </td>
                 <td className="px-4 py-2 max-w-lg truncate-2-lines items-center">
                   {friend.message}
