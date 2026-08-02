@@ -11,4 +11,6 @@ jobs:
     steps:
       - name: Call scheduled delivery endpoint
         run: |
-          curl -fsS "${{ secrets.CRON_URL }}?secret=${{ secrets.CRON_SECRET }}"
+          curl -fsS \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.CRON_URL }}"
