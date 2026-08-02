@@ -4,18 +4,15 @@ import { getAdminFirestore } from "@/lib/firebase/admin";
 import { buildEmailTemplate } from "@/lib/server/emailTemplate";
 import { APP_CONFIG } from "@/lib/constants/app";
 import { isScheduledDeliveryDue } from "@/lib/utils/scheduling";
+import { isAuthorizedCronRequest } from "@/lib/server/cronAuth";
 
 const resendApiKey = process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY;
 const fromEmail = process.env.RESEND_FROM_EMAIL || APP_CONFIG.DEFAULT_EMAIL_FROM;
-const cronSecret = process.env.CRON_SECRET;
 const resend = new Resend(resendApiKey);
 
 export async function GET(request: Request) {
-  if (cronSecret) {
-    const providedSecret = request.headers.get("x-cron-secret") || new URL(request.url).searchParams.get("secret");
-    if (providedSecret !== cronSecret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!isAuthorizedCronRequest(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   if (!resendApiKey) {
