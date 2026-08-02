@@ -23,13 +23,16 @@ function canCancelSending(friend: FriendData): boolean {
 export default function Dashboard() {
   const [friends, setFriends] = useState<FriendData[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setIsAuthenticated(true);
+        setUserId(user.uid);
       } else {
+        setUserId(null);
         router.push("/");
       }
     });
@@ -42,34 +45,46 @@ export default function Dashboard() {
     });
   };
 
-  // Fetch user's saved cards on component mount
+  // Fetch the current user's cards from the server endpoint.
   useEffect(() => {
     const fetchFriends = async () => {
-      const userId = auth.currentUser?.uid;
-      if (userId) {
-        try {
-          const friendsCollectionRef = collection(db, `users/${userId}/friends`);
-          const friendsSnapshot = await getDocs(friendsCollectionRef);
-          const friendsData = friendsSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          })) as FriendData[];
-
-          setFriends(friendsData);
-          return;
-        } catch (error) {
-          console.warn("Failed to fetch user friends from Firestore:", error);
-          // If Firestore is unavailable, show an empty list and allow UI to remain functional.
-          setFriends([]);
-          return;
-        }
+      if (!userId) {
+        setFriends([]);
+        return;
       }
 
-      // If not authenticated or no Firestore data, ensure friends is empty.
-      setFriends([]);
+      try {
+        const response = await fetch("/api/users/me/friends", {
+          headers: {
+            "x-user-id": userId,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch cards (${response.status})`);
+        }
+
+        const friendsData = (await response.json()) as Array<Partial<FriendData>>;
+        const normalizedFriends = friendsData.map((friend) => ({
+          id: typeof friend.id === "string" ? friend.id : "",
+          name: typeof friend.name === "string" ? friend.name : "",
+          email: typeof friend.email === "string" ? friend.email : "",
+          sendAt: typeof friend.sendAt === "string" ? friend.sendAt : undefined,
+          emailSentAt: typeof friend.emailSentAt === "string" ? friend.emailSentAt : undefined,
+          message: typeof friend.message === "string" ? friend.message : "",
+          cardType: typeof friend.cardType === "string" ? friend.cardType : "",
+          link: typeof friend.link === "string" ? friend.link : "",
+        })) as FriendData[];
+
+        setFriends(normalizedFriends);
+      } catch (error) {
+        console.warn("Failed to fetch current user's cards from the server:", error);
+        setFriends([]);
+      }
     };
+
     fetchFriends();
-  }, []);
+  }, [userId]);
 
   const handleCancelSending = async (friendId: string) => {
     const friend = friends.find((item) => item.id === friendId);
