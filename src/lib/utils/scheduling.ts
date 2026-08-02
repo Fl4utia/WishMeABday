@@ -91,6 +91,32 @@ export function formatScheduledDelivery(value?: string): string {
   return parsed.toLocaleString();
 }
 
+export function getDeliveryStatus(sendAt?: string, emailSentAt?: string, now: Date = new Date()): "Sent" | "Scheduled" | "Not scheduled" {
+  if (emailSentAt) {
+    return "Sent";
+  }
+
+  if (!sendAt) {
+    return "Not scheduled";
+  }
+
+  return isScheduledDeliveryDue(sendAt, now) ? "Sent" : "Scheduled";
+}
+
+export function formatDeliveryStatus(sendAt?: string, emailSentAt?: string, now: Date = new Date()): string {
+  const status = getDeliveryStatus(sendAt, emailSentAt, now);
+
+  if (status === "Sent") {
+    return "Sent";
+  }
+
+  if (status === "Scheduled" && sendAt) {
+    return formatScheduledDelivery(sendAt);
+  }
+
+  return "Not scheduled";
+}
+
 export function getLocalDateTimeInputValue(date: Date = new Date()): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");

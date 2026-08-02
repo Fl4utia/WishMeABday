@@ -1,4 +1,5 @@
 import {
+  formatDeliveryStatus,
   formatScheduledDelivery,
   isScheduledDeliveryDue,
   normalizeScheduledDelivery,
@@ -51,5 +52,11 @@ describe('scheduling helpers', () => {
   it('formats scheduled delivery for display', () => {
     expect(formatScheduledDelivery('2026-08-02T11:00')).toContain('2026');
     expect(formatScheduledDelivery(undefined)).toBe('Not scheduled');
+  });
+
+  it('marks overdue schedules as sent in the dashboard display', () => {
+    expect(formatDeliveryStatus('2026-08-02T11:00', undefined, new Date(2026, 7, 2, 11, 1))).toBe('Sent');
+    expect(formatDeliveryStatus('2026-08-02T11:00', undefined, new Date(2026, 7, 2, 10, 59))).toContain('2026');
+    expect(formatDeliveryStatus(undefined, '2026-08-02T11:00')).toBe('Sent');
   });
 });
