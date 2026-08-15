@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { getAdminFirestore } from "@/lib/firebase/admin";
 import { buildCardData, validateCardInput } from "@/lib/server/cardValidation";
+import { checkRateLimit } from "@/lib/server/rateLimiter";
 import type { ApiError } from "@/lib/types";
 
 export async function POST(request: Request) {
+  // Rate limit card creation: max 30 per hour per client
+  const rl = checkRateLimit(request, 30, 60 * 60 * 1000);
+  if (rl) return rl;
+
   const firestore = getAdminFirestore();
 
   if (!firestore) {
