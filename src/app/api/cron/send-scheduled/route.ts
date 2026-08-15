@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { getAdminFirestore } from "@/lib/firebase/admin";
 import { buildEmailTemplate } from "@/lib/server/emailTemplate";
 import { APP_CONFIG } from "@/lib/constants/app";
+import { isScheduledDeliveryDue } from "@/lib/utils/scheduling";
 import { isAuthorizedCronRequest } from "@/lib/server/cronAuth";
 
 const resendApiKey = process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY;
@@ -24,21 +25,19 @@ export async function GET(request: Request) {
   }
 
   const nowIso = new Date().toISOString();
-  // Query only cards that are due (sendAt <= now) and haven't been sent yet.
-  // Limit the batch size to keep the function runtime short.
-  const dueQuery = firestore
-    .collection("cards")
-    .where("sendAt", "<=", nowIso)
-    .where("emailSentAt", "==", null)
-    .limit(10);
-
-  const cardsSnapshot = await dueQuery.get();
-  const dueCards = cardsSnapshot.docs;
+  const cardsSnapshot = await firestore.collection("cards").get();
+  const dueCards = cardsSnapshot.docs.filter((cardDoc) => {
+    const card = cardDoc.data() as { sendAt?: string; emailSentAt?: string };
+    return (
+      typeof card.sendAt === "string" &&
+      card.sendAt.length > 0 &&
+      !card.emailSentAt &&
+      isScheduledDeliveryDue(card.sendAt, new Date(nowIso))
+    );
+  });
 
   const processed: Array<{ id: string; status: string }> = [];
 
-  // Process sequentially (small batch) to avoid exhausting function time or hitting
-  // external API concurrency limits. For a small project a limit of 10 is fine.
   for (const cardDoc of dueCards) {
     const card = cardDoc.data() as {
       name?: string;
