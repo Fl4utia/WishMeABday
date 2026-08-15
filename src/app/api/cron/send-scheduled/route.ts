@@ -6,7 +6,7 @@ import { APP_CONFIG } from "@/lib/constants/app";
 import { isScheduledDeliveryDue } from "@/lib/utils/scheduling";
 import { isAuthorizedCronRequest } from "@/lib/server/cronAuth";
 
-const resendApiKey = process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY;
+const resendApiKey = process.env.RESEND_API_KEY || process.env.RESEND_API_KEY;
 const fromEmail = process.env.RESEND_FROM_EMAIL || APP_CONFIG.DEFAULT_EMAIL_FROM;
 const resend = new Resend(resendApiKey);
 
