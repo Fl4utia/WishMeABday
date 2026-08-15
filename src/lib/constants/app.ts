@@ -5,7 +5,7 @@
 export const APP_CONFIG = {
   NAME: "Birthday Cards App",
   DESCRIPTION: "Create and send personalized birthday cards",
-  DEFAULT_EMAIL_FROM: "Happy birthday <onboarding@resend.dev>",
+  DEFAULT_EMAIL_FROM: "Happy birthday <no-reply@birthdayproject.click>",
 } as const;
 
 export const CONFETTI_CONFIG = {
