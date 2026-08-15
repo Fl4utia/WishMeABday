@@ -14,8 +14,15 @@ const resend = new Resend(resendApiKey);
  * POST /api/send
  * Sends a birthday card email to the recipient
  */
+import { checkRateLimit } from "@/lib/server/rateLimiter";
+
 export async function POST(req: Request) {
   try {
+    // Basic abuse protection: rate limit requests per client identifier
+    // Allow max 10 sends per hour per client (IP or authenticated user)
+    const rl = checkRateLimit(req, 10, 60 * 60 * 1000);
+    if (rl) return rl;
+
     // Validate API key
     if (!resendApiKey) {
       console.error("Resend API key is not configured");

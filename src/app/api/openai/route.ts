@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { OPENAI_CONFIG, SYSTEM_PROMPTS } from "@/lib/constants/prompts";
+import { checkRateLimit } from "@/lib/server/rateLimiter";
 import type { OpenAIRequest, OpenAIResponse, ApiError } from "@/lib/types";
 import { consumeQuotaRequest, getQuotaStatus } from "@/lib/server/aiQuota";
 
@@ -50,6 +51,11 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
+    // Basic abuse protection: rate limit AI generation per client
+    // Allow max 20 AI generation requests per day per client
+    const rl = checkRateLimit(req, 20, 24 * 60 * 60 * 1000);
+    if (rl) return rl;
+
     // Parse and validate request body
     let body: OpenAIRequest;
     try {
