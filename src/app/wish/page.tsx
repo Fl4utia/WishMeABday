@@ -334,7 +334,7 @@ const FriendMessageContent: React.FC = () => {
         }
       }
     } else if (shouldSendLater) {
-      setEmailStatus(`Card scheduled for ${sendOn}. It will be sent automatically at 00:01 on that day.`);
+    setEmailStatus(`Card scheduled for ${sendOn}. It will be sent automatically on that day.`);
     }
 
     setIsLoading(false);
@@ -418,7 +418,7 @@ const FriendMessageContent: React.FC = () => {
                 required
               />
               <p className="mt-2 text-sm text-gray-600">
-                Today sends immediately. Future dates send at 00:01 on that day.
+                Today sends immediately. Future dates are sent automatically on the selected day.
               </p>
             </div>
             <div className="mb-6 flex items-center justify-between">
