@@ -53,12 +53,11 @@ NEXT_PUBLIC_FIREBASE_APP_ID="your_firebase_app_id"
 # ------------------------------------------
 # Get your API key from: https://resend.com/api-keys
 # Used for sending birthday card emails
-NEXT_PUBLIC_RESEND_API_KEY="your_resend_api_key_here"
 RESEND_API_KEY="your_resend_api_key_here"
 
 # Use a verified sender/domain in Resend to avoid silent delivery failures
 # Example: Birthday App <noreply@yourdomain.com>
-RESEND_FROM_EMAIL="Happy birthday <onboarding@resend.dev>"
+RESEND_FROM_EMAIL="Happy birthday <no-reply@birthdayproject.click>"
 
 # ------------------------------------------
 # Google OAuth Configuration (Optional)

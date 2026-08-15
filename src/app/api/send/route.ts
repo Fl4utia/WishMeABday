@@ -4,7 +4,7 @@ import { APP_CONFIG } from "@/lib/constants/app";
 import { buildEmailTemplate } from "@/lib/server/emailTemplate";
 import type { SendEmailRequest, SendEmailResponse, ApiError } from "@/lib/types";
 
-const resendApiKey = process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY;
+const resendApiKey = process.env.RESEND_API_KEY;
 const fromEmail = process.env.RESEND_FROM_EMAIL || APP_CONFIG.DEFAULT_EMAIL_FROM;
 
 // Initialize Resend client
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     }
 
     // Use provided email or fallback to default
-    const toEmail = recipientEmail || "ximenasaibot@gmail.com";
+    const toEmail = recipientEmail || "";
 
     if (!isValidEmail(toEmail)) {
       return NextResponse.json<ApiError>(
